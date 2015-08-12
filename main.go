@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/fluffle/goirc/client"
+	log_glog "github.com/fluffle/goirc/logging/glog"
 	"github.com/fluffle/goirc/state"
 )
 
@@ -99,6 +100,7 @@ func main() {
 		},
 		PingFreq:    ping,
 		NewNick:     func(s string) string { return s + "_" },
+		Recover:     (*client.Conn).LogPanic,
 		SplitLen:    split,
 		Timeout:     timeout,
 		Server:      server,
@@ -106,6 +108,8 @@ func main() {
 		Version:     version,
 		QuitMessage: quit,
 	})
+
+	log_glog.Init()
 
 	w := writer{
 		notc: make(chan notice),
