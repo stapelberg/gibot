@@ -29,7 +29,6 @@ const (
 	nick    = "[" + name + "]"
 	server  = "irc.freenode.net:7000"
 	ssl     = true
-	channel = "#fdroid-dev"
 )
 
 type project struct {
@@ -53,6 +52,10 @@ func main() {
 		newProject("https://gitlab.com/fdroid/fdroiddata",
 			"d", "data", "fdroiddata"),
 	}
+	channels := map[string]struct{}{
+		"#fdroid": struct{}{},
+		"#fdroid-dev": struct{}{},
+	}
 
 	c := client.Client(&client.Config{
 		Me: &state.Nick{
@@ -72,14 +75,16 @@ func main() {
 	})
 	c.HandleFunc(client.CONNECTED, func(conn *client.Conn, line *client.Line) {
 		log.Printf("Connected.")
-		conn.Join(channel)
+		for channel := range channels {
+			conn.Join(channel)
+		}
 	})
 	c.HandleFunc(client.DISCONNECTED, func(conn *client.Conn, line *client.Line) {
 		log.Fatalf("Disconnected!")
 	})
 	c.HandleFunc(client.PRIVMSG, func(conn *client.Conn, line *client.Line) {
 		target := line.Args[0]
-		if target != channel {
+		if _, e := channels[target]; !e {
 			return
 		}
 		message := line.Args[1]
