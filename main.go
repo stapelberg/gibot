@@ -99,7 +99,6 @@ func main() {
 		},
 		PingFreq:    ping,
 		NewNick:     func(s string) string { return s + "_" },
-		Recover:     (*client.Conn).LogPanic,
 		SplitLen:    split,
 		Timeout:     timeout,
 		Server:      server,
