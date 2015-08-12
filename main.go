@@ -32,14 +32,16 @@ const (
 )
 
 type repo struct {
-	Url     string
-	IssueRe *regexp.Regexp
+	Url      string
+	IssuesRe *regexp.Regexp
+	PullsRe  *regexp.Regexp
 }
 
 func newRepo(url string, aliases ...string) repo {
 	return repo{
-		Url:     url,
-		IssueRe: regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`),
+		Url:      url,
+		IssuesRe: regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`),
+		PullsRe:  regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)!([1-9][0-9]*)`),
 	}
 }
 
@@ -89,9 +91,14 @@ func main() {
 		}
 		message := line.Args[1]
 		for _, p := range repos {
-			for _, issue := range p.IssueRe.FindAllStringSubmatch(message, -1) {
+			for _, issue := range p.IssuesRe.FindAllStringSubmatch(message, -1) {
 				n := issue[2]
 				notice := fmt.Sprintf("%s/issues/%s", p.Url, n)
+				conn.Notice(target, notice)
+			}
+			for _, issue := range p.PullsRe.FindAllStringSubmatch(message, -1) {
+				n := issue[2]
+				notice := fmt.Sprintf("%s/merge_requests/%s", p.Url, n)
 				conn.Notice(target, notice)
 			}
 		}
