@@ -22,6 +22,7 @@ const (
 	version = name + " v0.0"
 	quit    = name + " exited"
 
+	wait    = 2 * time.Second
 	timeout = 20 * time.Second
 	ping    = 2 * time.Minute
 	split   = 100
@@ -42,6 +43,24 @@ func newRepo(url string, aliases ...string) repo {
 		Url:      url,
 		IssuesRe: regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`),
 		PullsRe:  regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)!([1-9][0-9]*)`),
+	}
+}
+
+type notice struct {
+	channel string
+	message string
+}
+
+type writer struct {
+	notc chan notice
+	conn *client.Conn
+}
+
+func (w *writer) work() {
+	for {
+		not := <-w.notc
+		w.conn.Notice(not.channel, not.message)
+		time.Sleep(wait)
 	}
 }
 
@@ -75,31 +94,47 @@ func main() {
 		Version:     version,
 		QuitMessage: quit,
 	})
+
+	w := writer{
+		notc: make(chan notice),
+		conn: c,
+	}
+
 	c.HandleFunc(client.CONNECTED, func(conn *client.Conn, line *client.Line) {
 		log.Printf("Connected.")
 		for channel := range channels {
 			conn.Join(channel)
 		}
 	})
-	c.HandleFunc(client.DISCONNECTED, func(conn *client.Conn, line *client.Line) {
+	c.HandleFunc(client.DISCONNECTED, func(_ *client.Conn, line *client.Line) {
 		log.Fatalf("Disconnected!")
 	})
-	c.HandleFunc(client.PRIVMSG, func(conn *client.Conn, line *client.Line) {
-		target := line.Args[0]
-		if _, e := channels[target]; !e {
+	c.HandleFunc(client.PRIVMSG, func(_ *client.Conn, line *client.Line) {
+		channel := line.Args[0]
+		if _, e := channels[channel]; !e {
 			return
 		}
-		message := line.Args[1]
+		orig := line.Args[1]
 		for _, p := range repos {
-			for _, issue := range p.IssuesRe.FindAllStringSubmatch(message, -1) {
+			for _, issue := range p.IssuesRe.FindAllStringSubmatch(orig, -1) {
 				n := issue[2]
-				notice := fmt.Sprintf("%s/issues/%s", p.Url, n)
-				conn.Notice(target, notice)
+				message := fmt.Sprintf("%s/issues/%s", p.Url, n)
+				go func() {
+					w.notc <- notice{
+						channel: channel,
+						message: message,
+					}
+				}()
 			}
-			for _, issue := range p.PullsRe.FindAllStringSubmatch(message, -1) {
+			for _, issue := range p.PullsRe.FindAllStringSubmatch(orig, -1) {
 				n := issue[2]
-				notice := fmt.Sprintf("%s/merge_requests/%s", p.Url, n)
-				conn.Notice(target, notice)
+				message := fmt.Sprintf("%s/merge_requests/%s", p.Url, n)
+				go func() {
+					w.notc <- notice{
+						channel: channel,
+						message: message,
+					}
+				}()
 			}
 		}
 	})
@@ -108,8 +143,12 @@ func main() {
 	if err := c.Connect(); err != nil {
 		log.Fatalf("Connection error: %v", err)
 	}
+
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	go w.work()
+
 	<-sigc
 	log.Printf("Quitting.")
 	c.Quit()
