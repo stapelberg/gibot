@@ -26,34 +26,34 @@ const (
 	ping    = 2 * time.Minute
 	split   = 100
 
-	nick    = "[" + name + "]"
-	server  = "irc.freenode.net:7000"
-	ssl     = true
+	nick   = "[" + name + "]"
+	server = "irc.freenode.net:7000"
+	ssl    = true
 )
 
-type project struct {
-	Url   string
-	Issue *regexp.Regexp
+type repo struct {
+	Url     string
+	IssueRe *regexp.Regexp
 }
 
-func newProject(url string, aliases ...string) project {
-	return project{
-		Url:   url,
-		Issue: regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`),
+func newRepo(url string, aliases ...string) repo {
+	return repo{
+		Url:     url,
+		IssueRe: regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`),
 	}
 }
 
 func main() {
-	projects := []project{
-		newProject("https://gitlab.com/fdroid/fdroidclient",
+	repos := []repo{
+		newRepo("https://gitlab.com/fdroid/fdroidclient",
 			"", "c", "client", "fdroidclient"),
-		newProject("https://gitlab.com/fdroid/fdroidserver",
+		newRepo("https://gitlab.com/fdroid/fdroidserver",
 			"s", "server", "fdroidserver"),
-		newProject("https://gitlab.com/fdroid/fdroiddata",
+		newRepo("https://gitlab.com/fdroid/fdroiddata",
 			"d", "data", "fdroiddata"),
 	}
 	channels := map[string]struct{}{
-		"#fdroid": struct{}{},
+		"#fdroid":     struct{}{},
 		"#fdroid-dev": struct{}{},
 	}
 
@@ -88,8 +88,8 @@ func main() {
 			return
 		}
 		message := line.Args[1]
-		for _, p := range projects {
-			for _, issue := range p.Issue.FindAllStringSubmatch(message, -1) {
+		for _, p := range repos {
+			for _, issue := range p.IssueRe.FindAllStringSubmatch(message, -1) {
 				n := issue[2]
 				notice := fmt.Sprintf("%s/issues/%s", p.Url, n)
 				conn.Notice(target, notice)
