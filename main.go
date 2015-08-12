@@ -39,10 +39,14 @@ type repo struct {
 }
 
 func newRepo(url string, aliases ...string) repo {
+	issuesRe := regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`)
+	issuesRe.Longest()
+	pullsRe := regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)!([1-9][0-9]*)`)
+	pullsRe.Longest()
 	return repo{
 		Url:      url,
-		IssuesRe: regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`),
-		PullsRe:  regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)!([1-9][0-9]*)`),
+		IssuesRe: issuesRe,
+		PullsRe:  pullsRe,
 	}
 }
 
@@ -73,6 +77,15 @@ func main() {
 		newRepo("https://gitlab.com/fdroid/fdroiddata",
 			"d", "data", "fdroiddata"),
 	}
+
+	var all []string
+	for _, r := range repos {
+		all = append(all, r.IssuesRe.String())
+		all = append(all, r.PullsRe.String())
+	}
+	allRe := regexp.MustCompile(`(` + strings.Join(all, `|`) + `)`)
+	allRe.Longest()
+
 	channels := map[string]struct{}{
 		"#fdroid":     struct{}{},
 		"#fdroid-dev": struct{}{},
@@ -114,27 +127,29 @@ func main() {
 		if _, e := channels[channel]; !e {
 			return
 		}
-		orig := line.Args[1]
-		for _, p := range repos {
-			for _, issue := range p.IssuesRe.FindAllStringSubmatch(orig, -1) {
-				n := issue[2]
-				message := fmt.Sprintf("%s/issues/%s", p.Url, n)
-				go func() {
-					w.notc <- notice{
-						channel: channel,
-						message: message,
-					}
-				}()
-			}
-			for _, issue := range p.PullsRe.FindAllStringSubmatch(orig, -1) {
-				n := issue[2]
-				message := fmt.Sprintf("%s/merge_requests/%s", p.Url, n)
-				go func() {
-					w.notc <- notice{
-						channel: channel,
-						message: message,
-					}
-				}()
+		origmsg := line.Args[1]
+		for _, m := range allRe.FindAllString(origmsg, -1) {
+			for _, r := range repos {
+				if s := r.IssuesRe.FindStringSubmatch(m); s != nil && s[0] == m {
+					n := s[2]
+					message := fmt.Sprintf("%s/issues/%s", r.Url, n)
+					go func() {
+						w.notc <- notice{
+							channel: channel,
+							message: message,
+						}
+					}()
+				}
+				if s := r.PullsRe.FindStringSubmatch(m); s != nil && s[0] == m {
+					n := s[2]
+					message := fmt.Sprintf("%s/merge_requests/%s", r.Url, n)
+					go func() {
+						w.notc <- notice{
+							channel: channel,
+							message: message,
+						}
+					}()
+				}
 			}
 		}
 	})
