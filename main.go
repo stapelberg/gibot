@@ -15,12 +15,16 @@ import (
 	"github.com/mvdan/gibot/site/gitlab"
 )
 
+const (
+	nick = "[gibot]"
+)
+
 func main() {
 	chans := []string{
 		"#fdroid",
 		"#fdroid-dev",
 	}
-	c, err := irc.Connect(chans)
+	c, err := irc.Connect(nick, chans)
 	if err != nil {
 		log.Fatalf("Could not connect to IRC: %v", err)
 	}

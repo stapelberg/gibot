@@ -22,7 +22,6 @@ const (
 	ping    = 2 * time.Minute
 	split   = 100
 
-	nick   = "[" + name + "]"
 	server = "irc.freenode.net:7000"
 	ssl    = true
 )
@@ -61,7 +60,7 @@ func toSet(list []string) map[string]struct{} {
 	return m
 }
 
-func Connect(chans []string) (*Client, error) {
+func Connect(nick string, chans []string) (*Client, error) {
 	c := &Client{
 		chans: toSet(chans),
 		In:    make(chan Event),
