@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,10 @@ import (
 
 	"github.com/mvdan/gibot/irc"
 	"github.com/mvdan/gibot/site/gitlab"
+)
+
+var (
+	configPath = flag.String("c", "gibot.json", "path to json config file")
 )
 
 var config struct {
@@ -28,15 +33,10 @@ var config struct {
 }
 
 func main() {
-	configFile, err := os.Open("gibot.json")
-	if err != nil {
-		log.Fatalf("Could not open config: %v", err)
-	}
-
-	if err := json.NewDecoder(configFile).Decode(&config); err != nil {
+	flag.Parse()
+	if err := loadConfig(); err != nil {
 		log.Fatalf("Could not load config: %v", err)
 	}
-
 	log.Printf("nick  = %s", config.Nick)
 	log.Printf("chans = %s", strings.Join(config.Chans, ", "))
 
@@ -74,6 +74,14 @@ func main() {
 	<-sigc
 	log.Printf("Quitting.")
 	c.Quit()
+}
+
+func loadConfig() error {
+	configFile, err := os.Open(*configPath)
+	if err != nil {
+		return err
+	}
+	return json.NewDecoder(configFile).Decode(&config)
 }
 
 func joinRegexes(repos []gitlab.Repo) *regexp.Regexp {
