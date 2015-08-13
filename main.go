@@ -34,26 +34,17 @@ var config struct {
 
 func main() {
 	flag.Parse()
-	if err := loadConfig(); err != nil {
+	if err := loadConfig(*configPath); err != nil {
 		log.Fatalf("Could not load config: %v", err)
 	}
 	log.Printf("nick  = %s", config.Nick)
 	log.Printf("chans = %s", strings.Join(config.Chans, ", "))
 
 	var repos []gitlab.Repo
-	knownAliases := make(map[string]struct{})
 	for _, r := range config.Repos {
 		aliases := append(r.Aliases, r.Name)
-		repos = append(repos, gitlab.NewRepo(r.Name,
-			r.Url, aliases...))
-		for _, a := range aliases {
-			if _, e := knownAliases[a]; e {
-				log.Fatalf("Alias '%s' is not unique!", a)
-			}
-			knownAliases[a] = struct{}{}
-		}
+		repos = append(repos, gitlab.NewRepo(r.Name, r.Url, aliases...))
 	}
-
 	l := &listener{
 		repos: repos,
 		allRe: joinRegexes(repos),
@@ -76,12 +67,37 @@ func main() {
 	c.Quit()
 }
 
-func loadConfig() error {
-	configFile, err := os.Open(*configPath)
+func loadConfig(p string) error {
+	configFile, err := os.Open(p)
 	if err != nil {
 		return err
 	}
-	return json.NewDecoder(configFile).Decode(&config)
+	if err := json.NewDecoder(configFile).Decode(&config); err != nil {
+		return err
+	}
+	knownAliases := make(map[string]struct{})
+	if config.Nick == "" {
+		return fmt.Errorf("no nick specified")
+	}
+	if len(config.Chans) < 1 {
+		return fmt.Errorf("no channels specified")
+	}
+	for _, r := range config.Repos {
+		if r.Name == "" {
+			return fmt.Errorf("repo without name")
+		}
+		if r.Url == "" {
+			return fmt.Errorf("repo without url")
+		}
+		aliases := append(r.Aliases, r.Name)
+		for _, a := range aliases {
+			if _, e := knownAliases[a]; e {
+				return fmt.Errorf("alias '%s' is not unique", a)
+			}
+			knownAliases[a] = struct{}{}
+		}
+	}
+	return nil
 }
 
 func joinRegexes(repos []gitlab.Repo) *regexp.Regexp {
