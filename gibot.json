@@ -11,7 +11,6 @@
 			"aliases": [
 				"",
 				"c",
-				"client",
 				"fdroidclient"
 			]
 		},
@@ -20,7 +19,6 @@
 			"url": "https://gitlab.com/fdroid/fdroidserver",
 			"aliases": [
 				"s",
-				"server",
 				"fdroidserver"
 			]
 		},
@@ -29,7 +27,6 @@
 			"url": "https://gitlab.com/fdroid/fdroiddata",
 			"aliases": [
 				"d",
-				"data",
 				"fdroiddata"
 			]
 		}

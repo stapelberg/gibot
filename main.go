@@ -41,15 +41,16 @@ func main() {
 	log.Printf("chans = %s", strings.Join(config.Chans, ", "))
 
 	var repos []gitlab.Repo
-	aliases := make(map[string]struct{})
+	knownAliases := make(map[string]struct{})
 	for _, r := range config.Repos {
+		aliases := append(r.Aliases, r.Name)
 		repos = append(repos, gitlab.NewRepo(r.Name,
-			r.Url, r.Aliases...))
-		for _, a := range r.Aliases {
-			if _, e := aliases[a]; e {
+			r.Url, aliases...))
+		for _, a := range aliases {
+			if _, e := knownAliases[a]; e {
 				log.Fatalf("Alias '%s' is not unique!", a)
 			}
-			aliases[a] = struct{}{}
+			knownAliases[a] = struct{}{}
 		}
 	}
 
