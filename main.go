@@ -4,81 +4,52 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"regexp"
 	"strings"
 	"syscall"
-	"time"
 
-	"github.com/fluffle/goirc/client"
-	log_glog "github.com/fluffle/goirc/logging/glog"
-	"github.com/fluffle/goirc/state"
+	"github.com/mvdan/gibot/irc"
+	"github.com/mvdan/gibot/site/gitlab"
 )
-
-const (
-	name    = "gibot"
-	version = name + " v0.0"
-	quit    = name + " exited"
-
-	wait    = 2 * time.Second
-	timeout = 20 * time.Second
-	ping    = 2 * time.Minute
-	split   = 100
-
-	nick   = "[" + name + "]"
-	server = "irc.freenode.net:7000"
-	ssl    = true
-)
-
-type repo struct {
-	Url      string
-	IssuesRe *regexp.Regexp
-	PullsRe  *regexp.Regexp
-}
-
-func newRepo(url string, aliases ...string) repo {
-	issuesRe := regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`)
-	issuesRe.Longest()
-	pullsRe := regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)!([1-9][0-9]*)`)
-	pullsRe.Longest()
-	return repo{
-		Url:      url,
-		IssuesRe: issuesRe,
-		PullsRe:  pullsRe,
-	}
-}
-
-type notice struct {
-	channel string
-	message string
-}
-
-type writer struct {
-	notc chan notice
-	conn *client.Conn
-}
-
-func (w *writer) work() {
-	for {
-		not := <-w.notc
-		w.conn.Notice(not.channel, not.message)
-		time.Sleep(wait)
-	}
-}
 
 func main() {
-	repos := []repo{
-		newRepo("https://gitlab.com/fdroid/fdroidclient",
+	chans := []string{
+		"#fdroid",
+		"#fdroid-dev",
+	}
+	c, err := irc.Connect(chans)
+	if err != nil {
+		log.Fatalf("Could not connect to IRC: %v", err)
+	}
+
+	repos := []gitlab.Repo{
+		gitlab.NewRepo("https://gitlab.com/fdroid/fdroidclient",
 			"", "c", "client", "fdroidclient"),
-		newRepo("https://gitlab.com/fdroid/fdroidserver",
+		gitlab.NewRepo("https://gitlab.com/fdroid/fdroidserver",
 			"s", "server", "fdroidserver"),
-		newRepo("https://gitlab.com/fdroid/fdroiddata",
+		gitlab.NewRepo("https://gitlab.com/fdroid/fdroiddata",
 			"d", "data", "fdroiddata"),
 	}
 
+	l := &listener{
+		repos:  repos,
+		allRe:  joinRegexes(repos),
+		client: c,
+	}
+	go l.listen()
+
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	<-sigc
+	log.Printf("Quitting.")
+	c.Quit()
+}
+
+func joinRegexes(repos []gitlab.Repo) *regexp.Regexp {
 	var all []string
 	for _, r := range repos {
 		all = append(all, r.IssuesRe.String())
@@ -86,88 +57,50 @@ func main() {
 	}
 	allRe := regexp.MustCompile(`(` + strings.Join(all, `|`) + `)`)
 	allRe.Longest()
+	return allRe
+}
 
-	channels := map[string]struct{}{
-		"#fdroid":     struct{}{},
-		"#fdroid-dev": struct{}{},
-	}
+type listener struct {
+	repos  []gitlab.Repo
+	allRe  *regexp.Regexp
+	client *irc.Client
+}
 
-	c := client.Client(&client.Config{
-		Me: &state.Nick{
-			Nick:  nick,
-			Ident: name,
-			Name:  name,
-		},
-		PingFreq:    ping,
-		NewNick:     func(s string) string { return s + "_" },
-		Recover:     (*client.Conn).LogPanic,
-		SplitLen:    split,
-		Timeout:     timeout,
-		Server:      server,
-		SSL:         ssl,
-		Version:     version,
-		QuitMessage: quit,
-	})
-
-	log_glog.Init()
-
-	w := writer{
-		notc: make(chan notice),
-		conn: c,
-	}
-
-	c.HandleFunc(client.CONNECTED, func(conn *client.Conn, line *client.Line) {
-		log.Printf("Connected.")
-		for channel := range channels {
-			conn.Join(channel)
+func (l *listener) listen() {
+	for {
+		ev := <-l.client.In
+		switch ev.Cmd {
+		case "PRIVMSG":
+			go l.onPrivmsg(ev)
 		}
-	})
-	c.HandleFunc(client.DISCONNECTED, func(_ *client.Conn, line *client.Line) {
-		log.Fatalf("Disconnected!")
-	})
-	c.HandleFunc(client.PRIVMSG, func(_ *client.Conn, line *client.Line) {
-		channel := line.Args[0]
-		if _, e := channels[channel]; !e {
-			return
-		}
-		origmsg := line.Args[1]
-		for _, m := range allRe.FindAllString(origmsg, -1) {
-			for _, r := range repos {
-				if s := r.IssuesRe.FindStringSubmatch(m); s != nil && s[0] == m {
-					n := s[2]
-					message := fmt.Sprintf("%s/issues/%s", r.Url, n)
-					go func() {
-						w.notc <- notice{
-							channel: channel,
-							message: message,
-						}
-					}()
-				}
-				if s := r.PullsRe.FindStringSubmatch(m); s != nil && s[0] == m {
-					n := s[2]
-					message := fmt.Sprintf("%s/merge_requests/%s", r.Url, n)
-					go func() {
-						w.notc <- notice{
-							channel: channel,
-							message: message,
-						}
-					}()
-				}
+	}
+}
+
+func (l *listener) onPrivmsg(ev irc.Event) {
+	channel := ev.Args[0]
+	line := ev.Args[1]
+	for _, m := range l.allRe.FindAllString(line, -1) {
+		for _, r := range l.repos {
+			if s := r.IssuesRe.FindStringSubmatch(m); s != nil && s[0] == m {
+				n := s[2]
+				message := r.IssueURL(n)
+				go func() {
+					l.client.Out <- irc.Notice{
+						Channel: channel,
+						Message: message,
+					}
+				}()
+			}
+			if s := r.PullsRe.FindStringSubmatch(m); s != nil && s[0] == m {
+				n := s[2]
+				message := r.PullURL(n)
+				go func() {
+					l.client.Out <- irc.Notice{
+						Channel: channel,
+						Message: message,
+					}
+				}()
 			}
 		}
-	})
-
-	log.Printf("Connecting...")
-	if err := c.Connect(); err != nil {
-		log.Fatalf("Connection error: %v", err)
 	}
-
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
-	go w.work()
-
-	<-sigc
-	log.Printf("Quitting.")
-	c.Quit()
 }
