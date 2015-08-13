@@ -78,8 +78,12 @@ func (l *listener) listen() {
 	for {
 		ev := <-l.client.In
 		switch ev.Cmd {
+		case "CONNECTED":
+			log.Printf("Connected.")
 		case "PRIVMSG":
 			go l.onPrivmsg(ev)
+		case "DISCONNECTED":
+			log.Fatalf("Disconnected!")
 		}
 	}
 }
