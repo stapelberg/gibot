@@ -10,17 +10,19 @@ import (
 )
 
 type Repo struct {
+	Name     string
 	URL      string
 	IssuesRe *regexp.Regexp
 	PullsRe  *regexp.Regexp
 }
 
-func NewRepo(url string, aliases ...string) Repo {
+func NewRepo(name string, url string, aliases ...string) Repo {
 	issuesRe := regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)#([1-9][0-9]*)`)
 	issuesRe.Longest()
 	pullsRe := regexp.MustCompile(`(` + strings.Join(aliases, "|") + `)!([1-9][0-9]*)`)
 	pullsRe.Longest()
 	return Repo{
+		Name:     name,
 		URL:      url,
 		IssuesRe: issuesRe,
 		PullsRe:  pullsRe,

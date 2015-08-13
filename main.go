@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -30,11 +31,14 @@ func main() {
 	}
 
 	repos := []gitlab.Repo{
-		gitlab.NewRepo("https://gitlab.com/fdroid/fdroidclient",
+		gitlab.NewRepo("client",
+			"https://gitlab.com/fdroid/fdroidclient",
 			"", "c", "client", "fdroidclient"),
-		gitlab.NewRepo("https://gitlab.com/fdroid/fdroidserver",
+		gitlab.NewRepo("server",
+			"https://gitlab.com/fdroid/fdroidserver",
 			"s", "server", "fdroidserver"),
-		gitlab.NewRepo("https://gitlab.com/fdroid/fdroiddata",
+		gitlab.NewRepo("data",
+			"https://gitlab.com/fdroid/fdroiddata",
 			"d", "data", "fdroiddata"),
 	}
 
@@ -87,7 +91,7 @@ func (l *listener) onPrivmsg(ev irc.Event) {
 		for _, r := range l.repos {
 			if s := r.IssuesRe.FindStringSubmatch(m); s != nil && s[0] == m {
 				n := s[2]
-				message := r.IssueURL(n)
+				message := fmt.Sprintf("[%s] %s", r.Name, r.IssueURL(n))
 				go func() {
 					l.client.Out <- irc.Notice{
 						Channel: channel,
@@ -97,7 +101,7 @@ func (l *listener) onPrivmsg(ev irc.Event) {
 			}
 			if s := r.PullsRe.FindStringSubmatch(m); s != nil && s[0] == m {
 				n := s[2]
-				message := r.PullURL(n)
+				message := fmt.Sprintf("[%s] %s", r.Name, r.PullURL(n))
 				go func() {
 					l.client.Out <- irc.Notice{
 						Channel: channel,
