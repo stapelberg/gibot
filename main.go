@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -16,30 +17,38 @@ import (
 	"github.com/mvdan/gibot/site/gitlab"
 )
 
-const (
-	nick = "[gibot]"
-)
+var config struct {
+	Nick  string   `json:"nick"`
+	Chans []string `json:"chans"`
+	Repos []struct {
+		Name    string   `json:"name"`
+		Url     string   `json:"url"`
+		Aliases []string `json:"aliases"`
+	} `json:"repos"`
+}
 
 func main() {
-	chans := []string{
-		"#fdroid",
-		"#fdroid-dev",
+	configFile, err := os.Open("gibot.json")
+	if err != nil {
+		log.Fatalf("Could not open config: %v", err)
 	}
-	c, err := irc.Connect(nick, chans)
+
+	if err := json.NewDecoder(configFile).Decode(&config); err != nil {
+		log.Fatalf("Could not load config: %v", err)
+	}
+
+	log.Printf("nick  = %s", config.Nick)
+	log.Printf("chans = %s", strings.Join(config.Chans, ", "))
+	log.Printf("Connecting...")
+	c, err := irc.Connect(config.Nick, config.Chans)
 	if err != nil {
 		log.Fatalf("Could not connect to IRC: %v", err)
 	}
 
-	repos := []gitlab.Repo{
-		gitlab.NewRepo("client",
-			"https://gitlab.com/fdroid/fdroidclient",
-			"", "c", "client", "fdroidclient"),
-		gitlab.NewRepo("server",
-			"https://gitlab.com/fdroid/fdroidserver",
-			"s", "server", "fdroidserver"),
-		gitlab.NewRepo("data",
-			"https://gitlab.com/fdroid/fdroiddata",
-			"d", "data", "fdroiddata"),
+	var repos []gitlab.Repo
+	for _, r := range config.Repos {
+		repos = append(repos, gitlab.NewRepo(r.Name,
+			r.Url, r.Aliases...))
 	}
 
 	l := &listener{

@@ -1,0 +1,38 @@
+{
+	"nick": "[gibot]",
+	"chans": [
+		"#fdroid",
+		"#fdroid-dev"
+	],
+	"repos": [
+		{
+			"name": "client",
+			"url": "https://gitlab.com/fdroid/fdroidclient",
+			"aliases": [
+				"",
+				"c",
+				"client",
+				"fdroidclient"
+			]
+		},
+		{
+			"name": "server",
+			"url": "https://gitlab.com/fdroid/fdroidserver",
+			"aliases": [
+				"s",
+				"server",
+				"fdroidserver"
+			]
+		},
+		{
+			"name": "data",
+			"url": "https://gitlab.com/fdroid/fdroiddata",
+			"aliases": [
+				"d",
+				"data",
+				"fdroiddata"
+			]
+		}
+	]
+
+}
