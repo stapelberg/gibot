@@ -14,7 +14,7 @@ import (
 
 const (
 	name    = "gibot"
-	version = name + " v0.0"
+	version = name + " v0.0 github.com/mvdan/gibot"
 	quit    = name + " exited"
 
 	wait    = 2 * time.Second
