@@ -39,23 +39,32 @@ func main() {
 
 	log.Printf("nick  = %s", config.Nick)
 	log.Printf("chans = %s", strings.Join(config.Chans, ", "))
+
+	var repos []gitlab.Repo
+	aliases := make(map[string]struct{})
+	for _, r := range config.Repos {
+		repos = append(repos, gitlab.NewRepo(r.Name,
+			r.Url, r.Aliases...))
+		for _, a := range r.Aliases {
+			if _, e := aliases[a]; e {
+				log.Fatalf("Alias '%s' is not unique!", a)
+			}
+			aliases[a] = struct{}{}
+		}
+	}
+
+	l := &listener{
+		repos: repos,
+		allRe: joinRegexes(repos),
+	}
+
 	log.Printf("Connecting...")
 	c, err := irc.Connect(config.Nick, config.Chans)
 	if err != nil {
 		log.Fatalf("Could not connect to IRC: %v", err)
 	}
 
-	var repos []gitlab.Repo
-	for _, r := range config.Repos {
-		repos = append(repos, gitlab.NewRepo(r.Name,
-			r.Url, r.Aliases...))
-	}
-
-	l := &listener{
-		repos:  repos,
-		allRe:  joinRegexes(repos),
-		client: c,
-	}
+	l.client = c
 	go l.listen()
 
 	sigc := make(chan os.Signal, 1)
