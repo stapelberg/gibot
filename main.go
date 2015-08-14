@@ -43,7 +43,7 @@ func main() {
 	var repos []gitlab.Repo
 	for _, r := range config.Repos {
 		aliases := append(r.Aliases, r.Name)
-		repos = append(repos, gitlab.NewRepo(r.Name, r.Url, aliases...))
+		repos = append(repos, *gitlab.NewRepo(r.Name, r.Url, aliases...))
 	}
 	l := &listener{
 		repos: repos,
