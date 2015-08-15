@@ -31,6 +31,7 @@ var (
 var config struct {
 	Nick   string
 	Server string
+	Pass   string
 	TLS    bool
 	Chans  []string
 	Repos  []site.Repo
@@ -53,20 +54,26 @@ func main() {
 	}
 	allRe = joinRegexes(repos)
 
+	bot := getBot()
 	log.Printf("Connecting...")
-
-	var bot *ircx.Bot
-	if config.TLS {
-		bot = ircx.WithTLS(config.Server, config.Nick, nil)
-	} else {
-		bot = ircx.Classic(config.Server, config.Nick)
-	}
-
 	if err := bot.Connect(); err != nil {
 		log.Fatalf("Unable to dial IRC Server: %v", err)
 	}
 	registerHandlers(bot)
 	bot.CallbackLoop()
+}
+
+func getBot() *ircx.Bot {
+	if !config.TLS {
+		if config.Pass == "" {
+			return ircx.Classic(config.Server, config.Nick)
+		}
+		return ircx.WithLogin(config.Server, config.Nick, config.Nick, config.Pass)
+	}
+	if config.Pass == "" {
+		return ircx.WithTLS(config.Server, config.Nick, nil)
+	}
+	return ircx.WithLoginTLS(config.Server, config.Nick, config.Nick, config.Pass, nil)
 }
 
 func loadConfig(p string) error {

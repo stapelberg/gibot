@@ -1,6 +1,7 @@
 {
 	"nick": "[gibot]",
 	"server": "chat.freenode.net:7000",
+	"pass": "privatepassword",
 	"tls": true,
 	"chans": [
 		"#fdroid",
