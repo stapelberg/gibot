@@ -28,6 +28,8 @@ var (
 
 	repos []gitlab.Repo
 	allRe *regexp.Regexp
+
+	pathRegex = regexp.MustCompile("[a-zA-Z0-9]+/[a-zA-Z0-9]+")
 )
 
 var config struct {
@@ -82,6 +84,9 @@ func loadConfig(p string) error {
 		}
 		if r.Path == "" {
 			return fmt.Errorf("repo without path")
+		}
+		if !pathRegex.MatchString(r.Path) {
+			return fmt.Errorf("incorrect repo path - should be like foo/bar")
 		}
 		aliases := append(r.Aliases, r.Name)
 		for _, a := range aliases {
