@@ -19,10 +19,6 @@ import (
 	"github.com/sorcix/irc"
 )
 
-const (
-	server = "chat.freenode.org:6667"
-)
-
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
 
@@ -33,9 +29,10 @@ var (
 )
 
 var config struct {
-	Nick  string
-	Chans []string
-	Repos []site.Repo
+	Nick   string
+	Server string
+	Chans  []string
+	Repos  []site.Repo
 }
 
 func main() {
@@ -55,7 +52,7 @@ func main() {
 
 	log.Printf("Connecting...")
 
-	bot := ircx.Classic(server, config.Nick)
+	bot := ircx.Classic(config.Server, config.Nick)
 	if err := bot.Connect(); err != nil {
 		log.Fatalf("Unable to dial IRC Server: %v", err)
 	}
@@ -74,6 +71,9 @@ func loadConfig(p string) error {
 	knownAliases := make(map[string]struct{})
 	if config.Nick == "" {
 		return fmt.Errorf("no nick specified")
+	}
+	if config.Server == "" {
+		return fmt.Errorf("no server specified")
 	}
 	if len(config.Chans) < 1 {
 		return fmt.Errorf("no channels specified")

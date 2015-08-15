@@ -1,5 +1,6 @@
 {
 	"nick": "[gibot]",
+	"server": "chat.freenode.org:6667",
 	"chans": [
 		"#fdroid",
 		"#fdroid-dev"
