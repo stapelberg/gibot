@@ -19,7 +19,7 @@ const (
 	wait    = 2 * time.Second
 	timeout = 20 * time.Second
 	ping    = 2 * time.Minute
-	split   = 100
+	split   = 300
 
 	server = "irc.freenode.net:7000"
 	ssl    = true
