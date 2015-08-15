@@ -9,18 +9,25 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
 	"regexp"
 	"strings"
-	"syscall"
 
-	"github.com/mvdan/gibot/irc"
 	"github.com/mvdan/gibot/site"
 	"github.com/mvdan/gibot/site/gitlab"
+
+	"github.com/nickvanw/ircx"
+	"github.com/sorcix/irc"
+)
+
+const (
+	server = "chat.freenode.org:6667"
 )
 
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
+
+	repos []gitlab.Repo
+	allRe *regexp.Regexp
 )
 
 var config struct {
@@ -37,32 +44,21 @@ func main() {
 	log.Printf("nick  = %s", config.Nick)
 	log.Printf("chans = %s", strings.Join(config.Chans, ", "))
 
-	var repos []gitlab.Repo
 	for i := range config.Repos {
 		r := &config.Repos[i]
 		r.Aliases = append(r.Aliases, r.Name)
 		repos = append(repos, *gitlab.NewRepo(r))
 	}
-	l := &listener{
-		repos: repos,
-		allRe: joinRegexes(repos),
-	}
+	allRe = joinRegexes(repos)
 
 	log.Printf("Connecting...")
-	c, err := irc.Connect(config.Nick, config.Chans)
-	if err != nil {
-		log.Fatalf("Could not connect to IRC: %v", err)
+
+	bot := ircx.Classic(server, config.Nick)
+	if err := bot.Connect(); err != nil {
+		log.Fatalf("Unable to dial IRC Server: %v", err)
 	}
-
-	l.client = c
-	go l.listen()
-
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
-	<-sigc
-	log.Printf("Quitting.")
-	c.Quit()
+	registerHandlers(bot)
+	bot.CallbackLoop()
 }
 
 func loadConfig(p string) error {
@@ -110,72 +106,71 @@ func joinRegexes(repos []gitlab.Repo) *regexp.Regexp {
 	return allRe
 }
 
-type listener struct {
-	repos  []gitlab.Repo
-	allRe  *regexp.Regexp
-	client *irc.Client
+func registerHandlers(bot *ircx.Bot) {
+	bot.AddCallback(irc.RPL_WELCOME, ircx.Callback{Handler: ircx.HandlerFunc(onWelcome)})
+	bot.AddCallback(irc.PING, ircx.Callback{Handler: ircx.HandlerFunc(onPing)})
+	bot.AddCallback(irc.PRIVMSG, ircx.Callback{Handler: ircx.HandlerFunc(onPrivmsg)})
 }
 
-func (l *listener) listen() {
-	for {
-		ev := <-l.client.In
-		switch ev.Cmd {
-		case "CONNECTED":
-			log.Printf("Connected.")
-		case "PRIVMSG":
-			go l.onPrivmsg(ev)
-		case "DISCONNECTED":
-			log.Fatalf("Disconnected!")
-		}
-	}
+func onWelcome(s ircx.Sender, m *irc.Message) {
+	log.Printf("Connected.")
+	s.Send(&irc.Message{
+		Command: irc.JOIN,
+		Params:  []string{strings.Join(config.Chans, ",")},
+	})
 }
 
-func (l *listener) onPrivmsg(ev irc.Event) {
-	channel := ev.Args[0]
-	line := ev.Args[1]
-	for _, m := range l.allRe.FindAllString(line, -1) {
-		for _, r := range l.repos {
-			if s := r.IssueRe.FindStringSubmatch(m); s != nil && s[0] == m {
-				body, err := r.IssueInfo(s[2])
+func onPing(s ircx.Sender, m *irc.Message) {
+	s.Send(&irc.Message{
+		Command:  irc.PONG,
+		Params:   m.Params,
+		Trailing: m.Trailing,
+	})
+}
+
+func onPrivmsg(s ircx.Sender, m *irc.Message) {
+	channel := m.Params[0]
+	line := m.Trailing
+	for _, m := range allRe.FindAllString(line, -1) {
+		for _, r := range repos {
+			if ss := r.IssueRe.FindStringSubmatch(m); ss != nil && ss[0] == m {
+				body, err := r.IssueInfo(ss[2])
 				if err != nil {
-					log.Printf("#%s: %v", s[2], err)
+					log.Printf("#%s: %v", ss[2], err)
 					continue
 				}
 				message := fmt.Sprintf("[%s] %s", r.Name, body)
-				go func() {
-					l.client.Out <- irc.Notice{
-						Channel: channel,
-						Message: message,
-					}
-				}()
+				go s.Send(&irc.Message{
+					Command:  irc.NOTICE,
+					Params:   []string{channel},
+					Trailing: message,
+				})
 			}
-			if s := r.PullRe.FindStringSubmatch(m); s != nil && s[0] == m {
-				body, err := r.PullInfo(s[2])
+			if ss := r.PullRe.FindStringSubmatch(m); ss != nil && ss[0] == m {
+				body, err := r.PullInfo(ss[2])
 				if err != nil {
-					log.Printf("!%s: %v", s[2], err)
+					log.Printf("!%s: %v", ss[2], err)
 					continue
 				}
 				message := fmt.Sprintf("[%s] %s", r.Name, body)
-				go func() {
-					l.client.Out <- irc.Notice{
-						Channel: channel,
-						Message: message,
-					}
-				}()
+				go s.Send(&irc.Message{
+					Command:  irc.NOTICE,
+					Params:   []string{channel},
+					Trailing: message,
+				})
 			}
-			if s := r.CommitRe.FindString(m); s == m {
-				body, err := r.CommitInfo(s)
+			if ss := r.CommitRe.FindString(m); ss == m {
+				body, err := r.CommitInfo(ss)
 				if err != nil {
-					log.Printf("%s: %v", s, err)
+					log.Printf("%s: %v", ss, err)
 					continue
 				}
 				message := fmt.Sprintf("[%s] %s", r.Name, body)
-				go func() {
-					l.client.Out <- irc.Notice{
-						Channel: channel,
-						Message: message,
-					}
-				}()
+				go s.Send(&irc.Message{
+					Command:  irc.NOTICE,
+					Params:   []string{channel},
+					Trailing: message,
+				})
 			}
 		}
 	}
