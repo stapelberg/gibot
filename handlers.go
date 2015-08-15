@@ -39,12 +39,7 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 					log.Printf("#%s: %v", ss[2], err)
 					continue
 				}
-				message := fmt.Sprintf("[%s] %s", r.Name, body)
-				go s.Send(&irc.Message{
-					Command:  irc.NOTICE,
-					Params:   []string{channel},
-					Trailing: message,
-				})
+				go sendNotice(s, channel, r.Name, body)
 			}
 			if ss := r.PullRe.FindStringSubmatch(m); ss != nil && ss[0] == m {
 				body, err := r.PullInfo(ss[2])
@@ -52,12 +47,7 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 					log.Printf("!%s: %v", ss[2], err)
 					continue
 				}
-				message := fmt.Sprintf("[%s] %s", r.Name, body)
-				go s.Send(&irc.Message{
-					Command:  irc.NOTICE,
-					Params:   []string{channel},
-					Trailing: message,
-				})
+				go sendNotice(s, channel, r.Name, body)
 			}
 			if ss := r.CommitRe.FindString(m); ss == m {
 				body, err := r.CommitInfo(ss)
@@ -65,13 +55,17 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 					log.Printf("%s: %v", ss, err)
 					continue
 				}
-				message := fmt.Sprintf("[%s] %s", r.Name, body)
-				go s.Send(&irc.Message{
-					Command:  irc.NOTICE,
-					Params:   []string{channel},
-					Trailing: message,
-				})
+				go sendNotice(s, channel, r.Name, body)
 			}
 		}
 	}
+}
+
+func sendNotice(s ircx.Sender, channel, categ, body string) error {
+	message := fmt.Sprintf("[%s] %s", categ, body)
+	return s.Send(&irc.Message{
+		Command:  irc.NOTICE,
+		Params:   []string{channel},
+		Trailing: message,
+	})
 }
