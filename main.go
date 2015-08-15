@@ -15,6 +15,7 @@ import (
 	"syscall"
 
 	"github.com/mvdan/gibot/irc"
+	"github.com/mvdan/gibot/site"
 	"github.com/mvdan/gibot/site/gitlab"
 )
 
@@ -23,13 +24,9 @@ var (
 )
 
 var config struct {
-	Nick  string   `json:"nick"`
-	Chans []string `json:"chans"`
-	Repos []struct {
-		Name    string   `json:"name"`
-		Url     string   `json:"url"`
-		Aliases []string `json:"aliases"`
-	} `json:"repos"`
+	Nick  string
+	Chans []string
+	Repos []site.Repo
 }
 
 func main() {
@@ -41,9 +38,10 @@ func main() {
 	log.Printf("chans = %s", strings.Join(config.Chans, ", "))
 
 	var repos []gitlab.Repo
-	for _, r := range config.Repos {
-		aliases := append(r.Aliases, r.Name)
-		repos = append(repos, *gitlab.NewRepo(r.Name, r.Url, aliases...))
+	for i := range config.Repos {
+		r := &config.Repos[i]
+		r.Aliases = append(r.Aliases, r.Name)
+		repos = append(repos, *gitlab.NewRepo(r))
 	}
 	l := &listener{
 		repos: repos,
@@ -86,8 +84,8 @@ func loadConfig(p string) error {
 		if r.Name == "" {
 			return fmt.Errorf("repo without name")
 		}
-		if r.Url == "" {
-			return fmt.Errorf("repo without url")
+		if r.Path == "" {
+			return fmt.Errorf("repo without path")
 		}
 		aliases := append(r.Aliases, r.Name)
 		for _, a := range aliases {

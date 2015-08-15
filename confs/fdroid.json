@@ -7,28 +7,31 @@
 	"repos": [
 		{
 			"name": "client",
-			"url": "https://gitlab.com/fdroid/fdroidclient",
+			"path": "fdroid/fdroidclient",
 			"aliases": [
 				"",
 				"c",
 				"fdroidclient"
-			]
+			],
+			"token": "privatetoken"
 		},
 		{
 			"name": "server",
-			"url": "https://gitlab.com/fdroid/fdroidserver",
+			"path": "fdroid/fdroidserver",
 			"aliases": [
 				"s",
 				"fdroidserver"
-			]
+			],
+			"token": "privatetoken"
 		},
 		{
 			"name": "data",
-			"url": "https://gitlab.com/fdroid/fdroiddata",
+			"path": "fdroid/fdroiddata",
 			"aliases": [
 				"d",
 				"fdroiddata"
-			]
+			],
+			"token": "privatetoken"
 		}
 	]
 
