@@ -135,8 +135,12 @@ func (l *listener) onPrivmsg(ev irc.Event) {
 	for _, m := range l.allRe.FindAllString(line, -1) {
 		for _, r := range l.repos {
 			if s := r.IssuesRe.FindStringSubmatch(m); s != nil && s[0] == m {
-				n := s[2]
-				message := fmt.Sprintf("[%s] %s", r.Name, r.IssueURL(n))
+				body, err := r.IssueInfo(s[2])
+				if err != nil {
+					log.Printf("#%s: %v", s[2], err)
+					continue
+				}
+				message := fmt.Sprintf("[%s] %s", r.Name, body)
 				go func() {
 					l.client.Out <- irc.Notice{
 						Channel: channel,
@@ -145,8 +149,12 @@ func (l *listener) onPrivmsg(ev irc.Event) {
 				}()
 			}
 			if s := r.PullsRe.FindStringSubmatch(m); s != nil && s[0] == m {
-				n := s[2]
-				message := fmt.Sprintf("[%s] %s", r.Name, r.PullURL(n))
+				body, err := r.PullInfo(s[2])
+				if err != nil {
+					log.Printf("!%s: %v", s[2], err)
+					continue
+				}
+				message := fmt.Sprintf("[%s] %s", r.Name, body)
 				go func() {
 					l.client.Out <- irc.Notice{
 						Channel: channel,
