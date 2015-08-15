@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/mvdan/gibot/site"
+
+	client "github.com/xanzy/go-gitlab"
 )
 
 type Repo struct {
@@ -16,6 +18,7 @@ type Repo struct {
 	Path     string
 	IssuesRe *regexp.Regexp
 	PullsRe  *regexp.Regexp
+	Client   client.Client
 }
 
 func NewRepo(r *site.Repo) *Repo {
@@ -28,6 +31,7 @@ func NewRepo(r *site.Repo) *Repo {
 		Path:     r.Path,
 		IssuesRe: issuesRe,
 		PullsRe:  pullsRe,
+		Client:   *client.NewClient(nil, r.Token),
 	}
 }
 
