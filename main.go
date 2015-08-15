@@ -31,6 +31,7 @@ var (
 var config struct {
 	Nick   string
 	Server string
+	TLS    bool
 	Chans  []string
 	Repos  []site.Repo
 }
@@ -40,8 +41,10 @@ func main() {
 	if err := loadConfig(*configPath); err != nil {
 		log.Fatalf("Could not load config: %v", err)
 	}
-	log.Printf("nick  = %s", config.Nick)
-	log.Printf("chans = %s", strings.Join(config.Chans, ", "))
+	log.Printf("nick   = %s", config.Nick)
+	log.Printf("server = %s", config.Server)
+	log.Printf("tls    = %t", config.TLS)
+	log.Printf("chans  = %s", strings.Join(config.Chans, ", "))
 
 	for i := range config.Repos {
 		r := &config.Repos[i]
@@ -52,7 +55,13 @@ func main() {
 
 	log.Printf("Connecting...")
 
-	bot := ircx.Classic(config.Server, config.Nick)
+	var bot *ircx.Bot
+	if config.TLS {
+		bot = ircx.WithTLS(config.Server, config.Nick, nil)
+	} else {
+		bot = ircx.Classic(config.Server, config.Nick)
+	}
+
 	if err := bot.Connect(); err != nil {
 		log.Fatalf("Unable to dial IRC Server: %v", err)
 	}
