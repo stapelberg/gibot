@@ -101,8 +101,9 @@ func loadConfig(p string) error {
 func joinRegexes(repos []gitlab.Repo) *regexp.Regexp {
 	var all []string
 	for _, r := range repos {
-		all = append(all, r.IssuesRe.String())
-		all = append(all, r.PullsRe.String())
+		all = append(all, r.IssueRe.String())
+		all = append(all, r.PullRe.String())
+		all = append(all, r.CommitRe.String())
 	}
 	allRe := regexp.MustCompile(`(` + strings.Join(all, `|`) + `)`)
 	allRe.Longest()
@@ -134,7 +135,7 @@ func (l *listener) onPrivmsg(ev irc.Event) {
 	line := ev.Args[1]
 	for _, m := range l.allRe.FindAllString(line, -1) {
 		for _, r := range l.repos {
-			if s := r.IssuesRe.FindStringSubmatch(m); s != nil && s[0] == m {
+			if s := r.IssueRe.FindStringSubmatch(m); s != nil && s[0] == m {
 				body, err := r.IssueInfo(s[2])
 				if err != nil {
 					log.Printf("#%s: %v", s[2], err)
@@ -148,10 +149,24 @@ func (l *listener) onPrivmsg(ev irc.Event) {
 					}
 				}()
 			}
-			if s := r.PullsRe.FindStringSubmatch(m); s != nil && s[0] == m {
+			if s := r.PullRe.FindStringSubmatch(m); s != nil && s[0] == m {
 				body, err := r.PullInfo(s[2])
 				if err != nil {
 					log.Printf("!%s: %v", s[2], err)
+					continue
+				}
+				message := fmt.Sprintf("[%s] %s", r.Name, body)
+				go func() {
+					l.client.Out <- irc.Notice{
+						Channel: channel,
+						Message: message,
+					}
+				}()
+			}
+			if s := r.CommitRe.FindString(m); s == m {
+				body, err := r.CommitInfo(s)
+				if err != nil {
+					log.Printf("%s: %v", s, err)
 					continue
 				}
 				message := fmt.Sprintf("[%s] %s", r.Name, body)

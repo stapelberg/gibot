@@ -17,21 +17,25 @@ import (
 type Repo struct {
 	Name     string
 	Path     string
-	IssuesRe *regexp.Regexp
-	PullsRe  *regexp.Regexp
+	IssueRe  *regexp.Regexp
+	PullRe   *regexp.Regexp
+	CommitRe *regexp.Regexp
 	Client   client.Client
 }
 
 func NewRepo(r *site.Repo) *Repo {
-	issuesRe := regexp.MustCompile(`(` + strings.Join(r.Aliases, "|") + `)#([1-9][0-9]*)`)
-	issuesRe.Longest()
-	pullsRe := regexp.MustCompile(`(` + strings.Join(r.Aliases, "|") + `)!([1-9][0-9]*)`)
-	pullsRe.Longest()
+	issueRe := regexp.MustCompile(`(` + strings.Join(r.Aliases, "|") + `)#([1-9][0-9]*)`)
+	issueRe.Longest()
+	pullRe := regexp.MustCompile(`(` + strings.Join(r.Aliases, "|") + `)!([1-9][0-9]*)`)
+	pullRe.Longest()
+	commitRe := regexp.MustCompile(`[0-9a-f]{6,20}`)
+	commitRe.Longest()
 	return &Repo{
 		Name:     r.Name,
 		Path:     r.Path,
-		IssuesRe: issuesRe,
-		PullsRe:  pullsRe,
+		IssueRe:  issueRe,
+		PullRe:   pullRe,
+		CommitRe: commitRe,
 		Client:   *client.NewClient(nil, r.Token),
 	}
 }
@@ -90,4 +94,22 @@ func (r *Repo) PullInfo(id string) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("#%s: %s - %s", id, merge.Title, r.mergeURL(id)), nil
+}
+
+func (r *Repo) getCommit(sha string) (*client.Commit, error) {
+	commit, _, err := r.Client.Commits.GetCommit(r.Path, sha)
+	return commit, err
+}
+
+func (r *Repo) commitURL(sha string) string {
+	return fmt.Sprintf("https://gitlab.com/%s/commit/%s", r.Path, sha)
+}
+
+func (r *Repo) CommitInfo(sha string) (string, error) {
+	commit, err := r.getCommit(sha)
+	if err != nil {
+		return "", err
+	}
+	short := commit.ShortID
+	return fmt.Sprintf("%s: %s - %s", short, commit.Title, r.commitURL(short)), nil
 }
