@@ -19,6 +19,10 @@ import (
 	"github.com/sorcix/irc"
 )
 
+const (
+	user = "gibot"
+)
+
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
 
@@ -54,26 +58,24 @@ func main() {
 	}
 	allRe = joinRegexes(repos)
 
-	bot := getBot()
+	configFunc := func(b *ircx.Bot) {
+		b.Server = config.Server
+		b.OriginalName = config.Nick
+		b.User = user
+		b.Password = config.Pass
+		if config.TLS {
+			// https://github.com/nickvanw/ircx/issues/12
+			// b.tlsConfig = tls.Config{}
+		}
+	}
+	bot := ircx.NewBot(configFunc)
+
 	log.Printf("Connecting...")
 	if err := bot.Connect(); err != nil {
 		log.Fatalf("Unable to dial IRC Server: %v", err)
 	}
 	registerHandlers(bot)
 	bot.CallbackLoop()
-}
-
-func getBot() *ircx.Bot {
-	if !config.TLS {
-		if config.Pass == "" {
-			return ircx.Classic(config.Server, config.Nick)
-		}
-		return ircx.WithLogin(config.Server, config.Nick, config.Nick, config.Pass)
-	}
-	if config.Pass == "" {
-		return ircx.WithTLS(config.Server, config.Nick, nil)
-	}
-	return ircx.WithLoginTLS(config.Server, config.Nick, config.Nick, config.Pass, nil)
 }
 
 func loadConfig(p string) error {
