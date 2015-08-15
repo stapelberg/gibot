@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/fluffle/goirc/client"
-	log_glog "github.com/fluffle/goirc/logging/glog"
 	"github.com/fluffle/goirc/state"
 )
 
@@ -75,7 +74,7 @@ func Connect(nick string, chans []string) (*Client, error) {
 		},
 		PingFreq:    ping,
 		NewNick:     func(s string) string { return s + "_" },
-		Recover:     (*client.Conn).LogPanic,
+		Recover:     func(*client.Conn, *client.Line) {},
 		SplitLen:    split,
 		Timeout:     timeout,
 		Server:      server,
@@ -83,8 +82,6 @@ func Connect(nick string, chans []string) (*Client, error) {
 		Version:     version,
 		QuitMessage: quit,
 	})
-
-	log_glog.Init()
 
 	c.conn.HandleFunc(client.CONNECTED, func(conn *client.Conn, line *client.Line) {
 		c.In <- EventFromLine(line)
