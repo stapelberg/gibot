@@ -6,7 +6,6 @@ package gitlab
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/mvdan/gibot/site"
@@ -40,17 +39,13 @@ func NewRepo(r *site.Repo) *Repo {
 	}
 }
 
-func (r *Repo) issueURL(id string) string {
-	return fmt.Sprintf("https://gitlab.com/%s/issues/%s", r.Path, id)
+func (r *Repo) IssueURL(id int) string {
+	return fmt.Sprintf("https://gitlab.com/%s/issues/%d", r.Path, id)
 }
 
-func (r *Repo) getIssue(id string) (*client.Issue, error) {
-	n, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, err
-	}
+func (r *Repo) GetIssue(id int) (*client.Issue, error) {
 	issues, _, err := r.Client.Issues.ListProjectIssues(r.Path,
-		&client.ListProjectIssuesOptions{IID: n})
+		&client.ListProjectIssuesOptions{IID: id})
 	if err != nil {
 		return nil, err
 	}
@@ -60,21 +55,17 @@ func (r *Repo) getIssue(id string) (*client.Issue, error) {
 	return &issues[0], nil
 }
 
-func (r *Repo) IssueInfo(id string) (string, error) {
-	issue, err := r.getIssue(id)
+func (r *Repo) IssueInfo(id int) (string, error) {
+	issue, err := r.GetIssue(id)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("#%s: %s - %s", id, issue.Title, r.issueURL(id)), nil
+	return fmt.Sprintf("#%d: %s - %s", id, issue.Title, r.IssueURL(id)), nil
 }
 
-func (r *Repo) getMergeRequest(id string) (*client.MergeRequest, error) {
-	n, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, err
-	}
+func (r *Repo) GetMergeRequest(id int) (*client.MergeRequest, error) {
 	merges, _, err := r.Client.MergeRequests.ListMergeRequests(r.Path,
-		&client.ListMergeRequestsOptions{IID: n})
+		&client.ListMergeRequestsOptions{IID: id})
 	if err != nil {
 		return nil, err
 	}
@@ -84,32 +75,32 @@ func (r *Repo) getMergeRequest(id string) (*client.MergeRequest, error) {
 	return &merges[0], nil
 }
 
-func (r *Repo) mergeURL(id string) string {
-	return fmt.Sprintf("https://gitlab.com/%s/merge_requests/%s", r.Path, id)
+func (r *Repo) MergeURL(id int) string {
+	return fmt.Sprintf("https://gitlab.com/%s/merge_requests/%d", r.Path, id)
 }
 
-func (r *Repo) PullInfo(id string) (string, error) {
-	merge, err := r.getMergeRequest(id)
+func (r *Repo) PullInfo(id int) (string, error) {
+	merge, err := r.GetMergeRequest(id)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("#%s: %s - %s", id, merge.Title, r.mergeURL(id)), nil
+	return fmt.Sprintf("#%d: %s - %s", id, merge.Title, r.MergeURL(id)), nil
 }
 
-func (r *Repo) getCommit(sha string) (*client.Commit, error) {
+func (r *Repo) GetCommit(sha string) (*client.Commit, error) {
 	commit, _, err := r.Client.Commits.GetCommit(r.Path, sha)
 	return commit, err
 }
 
-func (r *Repo) commitURL(sha string) string {
+func (r *Repo) CommitURL(sha string) string {
 	return fmt.Sprintf("https://gitlab.com/%s/commit/%s", r.Path, sha)
 }
 
 func (r *Repo) CommitInfo(sha string) (string, error) {
-	commit, err := r.getCommit(sha)
+	commit, err := r.GetCommit(sha)
 	if err != nil {
 		return "", err
 	}
 	short := commit.ShortID
-	return fmt.Sprintf("%s: %s - %s", short, commit.Title, r.commitURL(short)), nil
+	return fmt.Sprintf("%s: %s - %s", short, commit.Title, r.CommitURL(short)), nil
 }

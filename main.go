@@ -60,7 +60,7 @@ func main() {
 	allRe = joinRegexes(repos)
 
 	ircConfig := ircx.Config{
-		User: user,
+		User:     user,
 		Password: config.Pass,
 	}
 	if config.TLS {

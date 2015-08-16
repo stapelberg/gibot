@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/nickvanw/ircx"
@@ -34,17 +35,25 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 	for _, m := range allRe.FindAllString(line, -1) {
 		for _, r := range repos {
 			if ss := r.IssueRe.FindStringSubmatch(m); ss != nil && ss[0] == m {
-				body, err := r.IssueInfo(ss[2])
+				id, err := strconv.Atoi(ss[2])
 				if err != nil {
-					log.Printf("#%s: %v", ss[2], err)
+					continue
+				}
+				body, err := r.IssueInfo(id)
+				if err != nil {
+					log.Printf("#%d: %v", id, err)
 					continue
 				}
 				go sendNotice(s, channel, r.Name, body)
 			}
 			if ss := r.PullRe.FindStringSubmatch(m); ss != nil && ss[0] == m {
-				body, err := r.PullInfo(ss[2])
+				id, err := strconv.Atoi(ss[2])
 				if err != nil {
-					log.Printf("!%s: %v", ss[2], err)
+					continue
+				}
+				body, err := r.PullInfo(id)
+				if err != nil {
+					log.Printf("!%d: %v", id, err)
 					continue
 				}
 				go sendNotice(s, channel, r.Name, body)
