@@ -19,9 +19,7 @@ import (
 	"github.com/sorcix/irc"
 )
 
-const (
-	user = "gibot"
-)
+const user = "gibot"
 
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
@@ -40,6 +38,8 @@ var config struct {
 	Chans  []string
 	Repos  []site.Repo
 }
+
+var throttle throttler
 
 func main() {
 	flag.Parse()
@@ -75,6 +75,11 @@ func main() {
 		log.Fatalf("Unable to dial IRC Server: %v", err)
 	}
 	registerHandlers(bot)
+	throttle = throttler{
+		sender: bot.Sender,
+		sendc:  make(chan *irc.Message),
+	}
+	go throttle.Loop()
 	bot.CallbackLoop()
 }
 

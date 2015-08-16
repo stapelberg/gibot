@@ -61,9 +61,9 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 	}
 }
 
-func sendNotice(s ircx.Sender, channel, categ, body string) error {
+func sendNotice(s ircx.Sender, channel, categ, body string) {
 	message := fmt.Sprintf("[%s] %s", categ, body)
-	return s.Send(&irc.Message{
+	throttle.Send(&irc.Message{
 		Command:  irc.NOTICE,
 		Params:   []string{channel},
 		Trailing: message,
