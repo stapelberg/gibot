@@ -25,7 +25,7 @@ const user = "gibot"
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
 
-	repos []gitlab.Repo
+	repos map[string]*gitlab.Repo
 	allRe *regexp.Regexp
 
 	pathRegex = regexp.MustCompile("[a-zA-Z0-9]+/[a-zA-Z0-9]+")
@@ -52,10 +52,14 @@ func main() {
 	log.Printf("tls    = %t", config.TLS)
 	log.Printf("chans  = %s", strings.Join(config.Chans, ", "))
 
+	repos = make(map[string]*gitlab.Repo, len(config.Repos))
 	for i := range config.Repos {
 		r := &config.Repos[i]
 		r.Aliases = append(r.Aliases, r.Name)
-		repos = append(repos, *gitlab.NewRepo(r))
+		if _, e := repos[r.Name]; e {
+			log.Fatalf("Duplicate repo name found: %s", r.Name)
+		}
+		repos[r.Name] = gitlab.NewRepo(r)
 	}
 	allRe = joinRegexes(repos)
 
@@ -104,6 +108,9 @@ func loadConfig(p string) error {
 		if r.Name == "" {
 			return fmt.Errorf("repo without name")
 		}
+		if r.Prefix == "" {
+			return fmt.Errorf("repo without prefix")
+		}
 		if r.Path == "" {
 			return fmt.Errorf("repo without path")
 		}
@@ -121,7 +128,7 @@ func loadConfig(p string) error {
 	return nil
 }
 
-func joinRegexes(repos []gitlab.Repo) *regexp.Regexp {
+func joinRegexes(repos map[string]*gitlab.Repo) *regexp.Regexp {
 	var all []string
 	for _, r := range repos {
 		all = append(all, r.IssueRe.String())

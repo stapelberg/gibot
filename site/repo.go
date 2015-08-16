@@ -5,6 +5,7 @@ package site
 
 type Repo struct {
 	Name    string
+	Prefix  string
 	Path    string
 	Aliases []string
 	Token   string

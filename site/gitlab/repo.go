@@ -15,6 +15,7 @@ import (
 
 type Repo struct {
 	Name     string
+	Prefix   string
 	Path     string
 	IssueRe  *regexp.Regexp
 	PullRe   *regexp.Regexp
@@ -31,6 +32,7 @@ func NewRepo(r *site.Repo) *Repo {
 	commitRe.Longest()
 	return &Repo{
 		Name:     r.Name,
+		Prefix:   r.Prefix,
 		Path:     r.Path,
 		IssueRe:  issueRe,
 		PullRe:   pullRe,
@@ -40,7 +42,7 @@ func NewRepo(r *site.Repo) *Repo {
 }
 
 func (r *Repo) IssueURL(id int) string {
-	return fmt.Sprintf("https://gitlab.com/%s/issues/%d", r.Path, id)
+	return fmt.Sprintf("%s/%s/issues/%d", r.Prefix, r.Path, id)
 }
 
 func (r *Repo) GetIssue(id int) (*client.Issue, error) {
@@ -76,7 +78,7 @@ func (r *Repo) GetMergeRequest(id int) (*client.MergeRequest, error) {
 }
 
 func (r *Repo) MergeURL(id int) string {
-	return fmt.Sprintf("https://gitlab.com/%s/merge_requests/%d", r.Path, id)
+	return fmt.Sprintf("%s/%s/merge_requests/%d", r.Prefix, r.Path, id)
 }
 
 func (r *Repo) PullInfo(id int) (string, error) {
@@ -92,8 +94,16 @@ func (r *Repo) GetCommit(sha string) (*client.Commit, error) {
 	return commit, err
 }
 
+func shortCommit(sha string) string {
+	if len(sha) > 6 {
+		return sha[:6]
+	}
+	return sha
+}
+
 func (r *Repo) CommitURL(sha string) string {
-	return fmt.Sprintf("https://gitlab.com/%s/commit/%s", r.Path, sha)
+	sha = shortCommit(sha)
+	return fmt.Sprintf("%s/%s/commit/%s", r.Prefix, r.Path, sha)
 }
 
 func (r *Repo) CommitInfo(sha string) (string, error) {
@@ -103,4 +113,10 @@ func (r *Repo) CommitInfo(sha string) (string, error) {
 	}
 	short := commit.ShortID
 	return fmt.Sprintf("%s: %s - %s", short, commit.Title, r.CommitURL(short)), nil
+}
+
+func (r *Repo) CompareURL(before, after string) string {
+	before = shortCommit(before)
+	after = shortCommit(after)
+	return fmt.Sprintf("%s/%s/compare/%s...%s", r.Prefix, r.Path, before, after)
 }
