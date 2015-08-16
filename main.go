@@ -78,6 +78,7 @@ func main() {
 		sendc:  make(chan *irc.Message),
 	}
 	go throttle.Loop()
+	go webhookListen()
 	bot.CallbackLoop()
 }
 

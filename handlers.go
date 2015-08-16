@@ -44,7 +44,7 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 					log.Printf("#%d: %v", id, err)
 					continue
 				}
-				go sendNotice(s, channel, r.Name, body)
+				go sendNotice(channel, r.Name, body)
 			}
 			if ss := r.PullRe.FindStringSubmatch(m); ss != nil && ss[0] == m {
 				id, err := strconv.Atoi(ss[2])
@@ -56,7 +56,7 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 					log.Printf("!%d: %v", id, err)
 					continue
 				}
-				go sendNotice(s, channel, r.Name, body)
+				go sendNotice(channel, r.Name, body)
 			}
 			if ss := r.CommitRe.FindString(m); ss == m {
 				body, err := r.CommitInfo(ss)
@@ -64,17 +64,28 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 					log.Printf("%s: %v", ss, err)
 					continue
 				}
-				go sendNotice(s, channel, r.Name, body)
+				go sendNotice(channel, r.Name, body)
 			}
 		}
 	}
 }
 
-func sendNotice(s ircx.Sender, channel, categ, body string) {
+func sendNotice(channel, categ, body string) {
 	message := fmt.Sprintf("[%s] %s", categ, body)
 	throttle.Send(&irc.Message{
 		Command:  irc.NOTICE,
 		Params:   []string{channel},
 		Trailing: message,
 	})
+}
+
+func sendNoticeToAll(categ, body string) {
+	message := fmt.Sprintf("[%s] %s", categ, body)
+	for _, channel := range config.Chans {
+		throttle.Send(&irc.Message{
+			Command:  irc.NOTICE,
+			Params:   []string{channel},
+			Trailing: message,
+		})
+	}
 }

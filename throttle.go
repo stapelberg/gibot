@@ -24,7 +24,7 @@ func (t *throttler) Loop() {
 		if err := t.sender.Send(m); err != nil {
 			log.Printf("Error sending message: %v", err)
 		}
-		time.Sleep(timeBetweenMessages)
+		// time.Sleep(timeBetweenMessages)
 	}
 }
 
