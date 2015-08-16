@@ -4,6 +4,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -58,17 +59,14 @@ func main() {
 	}
 	allRe = joinRegexes(repos)
 
-	configFunc := func(b *ircx.Bot) {
-		b.Server = config.Server
-		b.OriginalName = config.Nick
-		b.User = user
-		b.Password = config.Pass
-		if config.TLS {
-			// https://github.com/nickvanw/ircx/issues/12
-			// b.tlsConfig = tls.Config{}
-		}
+	ircConfig := ircx.Config{
+		User: user,
+		Password: config.Pass,
 	}
-	bot := ircx.NewBot(configFunc)
+	if config.TLS {
+		ircConfig.TLSConfig = &tls.Config{}
+	}
+	bot := ircx.New(config.Server, config.Nick, ircConfig)
 
 	log.Printf("Connecting...")
 	if err := bot.Connect(); err != nil {
