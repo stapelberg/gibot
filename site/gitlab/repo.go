@@ -41,6 +41,11 @@ func NewRepo(r *site.Repo) *Repo {
 	}
 }
 
+func (r *Repo) GetUser(id int) (*client.User, error) {
+	user, _, err := r.Client.Users.GetUser(id)
+	return user, err
+}
+
 func (r *Repo) IssueURL(id int) string {
 	return fmt.Sprintf("%s/%s/issues/%d", r.Prefix, r.Path, id)
 }

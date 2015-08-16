@@ -98,9 +98,19 @@ func getBranch(ref string) string {
 }
 
 func onPush(r *gitlab.Repo, m map[string]interface{}) {
-	user := toMap(m["user"])
-	username := toStr(user["username"])
+	userId := toInt(m["user_id"])
+	user, err := r.GetUser(userId)
+	if err != nil {
+		log.Printf("Unknown user: %v", err)
+	}
+	username := user.Username
 	count := toInt(m["total_commits_count"])
+	var howMany string
+	if count > 1 {
+		howMany = fmt.Sprintf("%d commits", count)
+	} else {
+		howMany = fmt.Sprintf("%d commit", count)
+	}
 	branch := getBranch(toStr(m["ref"]))
 	if branch == "" {
 		return
@@ -108,7 +118,7 @@ func onPush(r *gitlab.Repo, m map[string]interface{}) {
 	before := toStr(m["before"])
 	after := toStr(m["after"])
 	url := r.CompareURL(before, after)
-	message := fmt.Sprintf("%s pushed %d commits to %s - %s", username, count, branch, url)
+	message := fmt.Sprintf("%s pushed %s to %s - %s", username, howMany, branch, url)
 	sendNoticeToAll(r.Name, message)
 }
 
