@@ -13,6 +13,11 @@ import (
 	client "github.com/xanzy/go-gitlab"
 )
 
+const (
+	titleLength = 50
+	shaLength   = 6
+)
+
 type Repo struct {
 	Name     string
 	Prefix   string
@@ -51,8 +56,8 @@ func firstLine(s string) string {
 
 func ShortTitle(message string) string {
 	title := firstLine(message)
-	if len(title) > 60 {
-		return fmt.Sprintf("%s…", title[:60])
+	if len(title) > titleLength {
+		return fmt.Sprintf("%s…", title[:titleLength-1])
 	}
 	return title
 }
@@ -118,8 +123,8 @@ func (r *Repo) GetCommit(sha string) (*client.Commit, error) {
 }
 
 func ShortCommit(sha string) string {
-	if len(sha) > 6 {
-		return sha[:6]
+	if len(sha) > shaLength {
+		return sha[:shaLength]
 	}
 	return sha
 }

@@ -128,7 +128,7 @@ func onPush(r *gitlab.Repo, m map[string]interface{}) {
 		sha := toStr(commit["id"])
 		short := gitlab.ShortCommit(sha)
 		url := r.CommitURL(short)
-		message = fmt.Sprintf("%s pushed 1 commit to %s: %s - %s", username, branch, title, url)
+		message = fmt.Sprintf("%s pushed to %s: %s - %s", username, branch, title, url)
 	}
 	sendNoticeToAll(r.Name, message)
 }
