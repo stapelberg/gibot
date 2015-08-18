@@ -71,6 +71,7 @@ func gitlabHandler(reponame string) func(http.ResponseWriter, *http.Request) {
 		m := make(map[string]interface{})
 		if err := decoder.Decode(&m); err != nil {
 			log.Printf("Error decoding webhook data: %v", err)
+			return
 		}
 		kind := toStr(m["object_kind"])
 		switch kind {
@@ -102,6 +103,7 @@ func onPush(r *gitlab.Repo, m map[string]interface{}) {
 	user, err := r.GetUser(userId)
 	if err != nil {
 		log.Printf("Unknown user: %v", err)
+		return
 	}
 	username := user.Username
 	count := toInt(m["total_commits_count"])
