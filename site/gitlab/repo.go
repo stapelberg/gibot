@@ -52,7 +52,7 @@ func firstLine(s string) string {
 func ShortTitle(message string) string {
 	title := firstLine(message)
 	if len(title) > 60 {
-		return fmt.Sprintf("%s…", title)
+		return fmt.Sprintf("%s…", title[:60])
 	}
 	return title
 }
@@ -135,7 +135,8 @@ func (r *Repo) CommitInfo(sha string) (string, error) {
 		return "", err
 	}
 	short := ShortCommit(sha)
-	return fmt.Sprintf("%s: %s - %s", short, commit.Title, r.CommitURL(short)), nil
+	title := ShortTitle(commit.Title)
+	return fmt.Sprintf("%s: %s - %s", short, title, r.CommitURL(short)), nil
 }
 
 func (r *Repo) CompareURL(before, after string) string {
