@@ -41,7 +41,16 @@ func NewRepo(r *site.Repo) *Repo {
 	}
 }
 
-func ShortTitle(title string) string {
+func firstLine(s string) string {
+	i := strings.IndexAny(s, "\n\r")
+	if i == -1 {
+		return s
+	}
+	return s[:i]
+}
+
+func ShortTitle(message string) string {
+	title := firstLine(message)
 	if len(title) > 60 {
 		return fmt.Sprintf("%s…", title)
 	}
