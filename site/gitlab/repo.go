@@ -66,7 +66,7 @@ func (r *Repo) GetIssue(id int) (*client.Issue, error) {
 	if len(issues) < 1 {
 		return nil, fmt.Errorf("Not found")
 	}
-	return &issues[0], nil
+	return issues[0], nil
 }
 
 func (r *Repo) IssueInfo(id int) (string, error) {
@@ -87,7 +87,7 @@ func (r *Repo) GetMergeRequest(id int) (*client.MergeRequest, error) {
 	if len(merges) < 1 {
 		return nil, fmt.Errorf("Not found")
 	}
-	return &merges[0], nil
+	return merges[0], nil
 }
 
 func (r *Repo) MergeURL(id int) string {
