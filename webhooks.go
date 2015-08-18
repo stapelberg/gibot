@@ -127,7 +127,7 @@ func onIssue(r *gitlab.Repo, m map[string]interface{}) {
 	username := toStr(user["username"])
 	attrs := toMap(m["object_attributes"])
 	iid := toInt(attrs["iid"])
-	title := toStr(attrs["title"])
+	title := gitlab.ShortTitle(toStr(attrs["title"]))
 	url := toStr(attrs["url"])
 	action := toStr(attrs["action"])
 	var message string
@@ -150,7 +150,7 @@ func onMergeRequest(r *gitlab.Repo, m map[string]interface{}) {
 	username := toStr(user["username"])
 	attrs := toMap(m["object_attributes"])
 	iid := toInt(attrs["iid"])
-	title := toStr(attrs["title"])
+	title := gitlab.ShortTitle(toStr(attrs["title"]))
 	url := toStr(attrs["url"])
 	action := toStr(attrs["action"])
 	var message string

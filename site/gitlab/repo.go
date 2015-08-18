@@ -41,6 +41,13 @@ func NewRepo(r *site.Repo) *Repo {
 	}
 }
 
+func ShortTitle(title string) string {
+	if len(title) > 60 {
+		return fmt.Sprintf("%s…", title)
+	}
+	return title
+}
+
 func (r *Repo) GetUser(id int) (*client.User, error) {
 	user, _, err := r.Client.Users.GetUser(id)
 	return user, err
@@ -67,7 +74,8 @@ func (r *Repo) IssueInfo(id int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("#%d: %s - %s", id, issue.Title, r.IssueURL(id)), nil
+	title := ShortTitle(issue.Title)
+	return fmt.Sprintf("#%d: %s - %s", id, title, r.IssueURL(id)), nil
 }
 
 func (r *Repo) GetMergeRequest(id int) (*client.MergeRequest, error) {
@@ -91,7 +99,8 @@ func (r *Repo) PullInfo(id int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("#%d: %s - %s", id, merge.Title, r.MergeURL(id)), nil
+	title := ShortTitle(merge.Title)
+	return fmt.Sprintf("#%d: %s - %s", id, title, r.MergeURL(id)), nil
 }
 
 func (r *Repo) GetCommit(sha string) (*client.Commit, error) {
