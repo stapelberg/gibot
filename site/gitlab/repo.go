@@ -108,7 +108,7 @@ func (r *Repo) GetCommit(sha string) (*client.Commit, error) {
 	return commit, err
 }
 
-func shortCommit(sha string) string {
+func ShortCommit(sha string) string {
 	if len(sha) > 6 {
 		return sha[:6]
 	}
@@ -116,7 +116,7 @@ func shortCommit(sha string) string {
 }
 
 func (r *Repo) CommitURL(sha string) string {
-	sha = shortCommit(sha)
+	sha = ShortCommit(sha)
 	return fmt.Sprintf("%s/%s/commit/%s", r.Prefix, r.Path, sha)
 }
 
@@ -125,12 +125,12 @@ func (r *Repo) CommitInfo(sha string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	short := commit.ShortID
+	short := ShortCommit(sha)
 	return fmt.Sprintf("%s: %s - %s", short, commit.Title, r.CommitURL(short)), nil
 }
 
 func (r *Repo) CompareURL(before, after string) string {
-	before = shortCommit(before)
-	after = shortCommit(after)
+	before = ShortCommit(before)
+	after = ShortCommit(after)
 	return fmt.Sprintf("%s/%s/compare/%s...%s", r.Prefix, r.Path, before, after)
 }

@@ -106,21 +106,30 @@ func onPush(r *gitlab.Repo, m map[string]interface{}) {
 		return
 	}
 	username := user.Username
-	count := toInt(m["total_commits_count"])
-	var howMany string
-	if count > 1 {
-		howMany = fmt.Sprintf("%d commits", count)
-	} else {
-		howMany = fmt.Sprintf("%d commit", count)
-	}
 	branch := getBranch(toStr(m["ref"]))
 	if branch == "" {
 		return
 	}
-	before := toStr(m["before"])
-	after := toStr(m["after"])
-	url := r.CompareURL(before, after)
-	message := fmt.Sprintf("%s pushed %s to %s - %s", username, howMany, branch, url)
+	count := toInt(m["total_commits_count"])
+	var message string
+	if count > 1 {
+		before := toStr(m["before"])
+		after := toStr(m["after"])
+		url := r.CompareURL(before, after)
+		message = fmt.Sprintf("%s pushed %d commits to %s - %s", username, count, branch, url)
+	} else {
+		commits := toSlice(m["commits"])
+		if len(commits) == 0 {
+			log.Printf("Empty commits")
+			return
+		}
+		commit := toMap(commits[0])
+		title := gitlab.ShortTitle(toStr(commit["message"]))
+		sha := toStr(commit["id"])
+		short := gitlab.ShortCommit(sha)
+		url := r.CommitURL(short)
+		message = fmt.Sprintf("%s pushed 1 commit to %s: %s - %s", username, branch, title, url)
+	}
 	sendNoticeToAll(r.Name, message)
 }
 
