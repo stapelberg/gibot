@@ -16,6 +16,7 @@ import (
 	"github.com/mvdan/gibot/site"
 	"github.com/mvdan/gibot/site/gitlab"
 
+	"github.com/mvdan/xurls"
 	"github.com/nickvanw/ircx"
 	"github.com/sorcix/irc"
 )
@@ -129,7 +130,7 @@ func loadConfig(p string) error {
 }
 
 func joinRegexes(repos map[string]*gitlab.Repo) *regexp.Regexp {
-	var all []string
+	all := []string{xurls.Strict.String()}
 	for _, r := range repos {
 		all = append(all, r.IssueRe.String())
 		all = append(all, r.PullRe.String())
