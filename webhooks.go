@@ -81,6 +81,8 @@ func gitlabHandler(reponame string) func(http.ResponseWriter, *http.Request) {
 			onIssue(repo, m)
 		case "merge_request":
 			onMergeRequest(repo, m)
+		case "tag_push":
+		case "note":
 		default:
 			log.Printf("Webhook event we don't handle: %s", kind)
 			return
@@ -149,6 +151,7 @@ func onIssue(r *gitlab.Repo, m map[string]interface{}) {
 		message = fmt.Sprintf("%s closed #%d: %s - %s", username, iid, title, url)
 	case "reopen":
 		message = fmt.Sprintf("%s reopened #%d: %s - %s", username, iid, title, url)
+	case "update":
 	default:
 		log.Printf("Issue action we don't handle: %s", action)
 		return
@@ -174,6 +177,7 @@ func onMergeRequest(r *gitlab.Repo, m map[string]interface{}) {
 		message = fmt.Sprintf("%s closed !%d: %s - %s", username, iid, title, url)
 	case "reopen":
 		message = fmt.Sprintf("%s reopened !%d: %s - %s", username, iid, title, url)
+	case "update":
 	default:
 		log.Printf("Merge Request action we don't handle: %s", action)
 		return
