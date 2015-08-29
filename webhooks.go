@@ -152,6 +152,7 @@ func onIssue(r *gitlab.Repo, m map[string]interface{}) {
 	case "reopen":
 		message = fmt.Sprintf("%s reopened #%d: %s - %s", username, iid, title, url)
 	case "update":
+		return
 	default:
 		log.Printf("Issue action we don't handle: %s", action)
 		return
@@ -178,6 +179,7 @@ func onMergeRequest(r *gitlab.Repo, m map[string]interface{}) {
 	case "reopen":
 		message = fmt.Sprintf("%s reopened !%d: %s - %s", username, iid, title, url)
 	case "update":
+		return
 	default:
 		log.Printf("Merge Request action we don't handle: %s", action)
 		return
