@@ -15,18 +15,24 @@ import (
 
 func onWelcome(s ircx.Sender, m *irc.Message) {
 	log.Printf("Connected.")
-	s.Send(&irc.Message{
+	err := s.Send(&irc.Message{
 		Command: irc.JOIN,
 		Params:  []string{strings.Join(config.Chans, ",")},
 	})
+	if err != nil {
+		log.Printf("Could not send JOIN: %v", err)
+	}
 }
 
 func onPing(s ircx.Sender, m *irc.Message) {
-	s.Send(&irc.Message{
+	err := s.Send(&irc.Message{
 		Command:  irc.PONG,
 		Params:   m.Params,
 		Trailing: m.Trailing,
 	})
+	if err != nil {
+		log.Printf("Could not reply to PING: %v", err)
+	}
 }
 
 func onPrivmsg(s ircx.Sender, m *irc.Message) {
