@@ -56,6 +56,7 @@ func firstLine(s string) string {
 
 func ShortTitle(message string) string {
 	title := firstLine(message)
+	title = strings.TrimSpace(title)
 	if len(title) > titleLength {
 		return fmt.Sprintf("%s…", title[:titleLength-1])
 	}
