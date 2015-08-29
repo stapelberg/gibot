@@ -84,7 +84,7 @@ func main() {
 	}
 	go throttle.Loop()
 	go webhookListen()
-	bot.CallbackLoop()
+	bot.HandleLoop()
 }
 
 func loadConfig(p string) error {
@@ -142,7 +142,7 @@ func joinRegexes(repos map[string]*gitlab.Repo) *regexp.Regexp {
 }
 
 func registerHandlers(bot *ircx.Bot) {
-	bot.AddCallback(irc.RPL_WELCOME, ircx.Callback{Handler: ircx.HandlerFunc(onWelcome)})
-	bot.AddCallback(irc.PING, ircx.Callback{Handler: ircx.HandlerFunc(onPing)})
-	bot.AddCallback(irc.PRIVMSG, ircx.Callback{Handler: ircx.HandlerFunc(onPrivmsg)})
+	bot.HandleFunc(irc.RPL_WELCOME, onWelcome)
+	bot.HandleFunc(irc.PING, onPing)
+	bot.HandleFunc(irc.PRIVMSG, onPrivmsg)
 }
