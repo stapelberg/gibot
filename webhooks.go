@@ -132,7 +132,7 @@ func onPush(r *gitlab.Repo, m map[string]interface{}) {
 		url := r.CommitURL(short)
 		message = fmt.Sprintf("%s pushed to %s: %s - %s", username, branch, title, url)
 	}
-	sendNoticeToAll(r.Name, message)
+	sendNotices(config.Feeds, r.Name, message)
 }
 
 func onIssue(r *gitlab.Repo, m map[string]interface{}) {
@@ -157,7 +157,7 @@ func onIssue(r *gitlab.Repo, m map[string]interface{}) {
 		log.Printf("Issue action we don't handle: %s", action)
 		return
 	}
-	sendNoticeToAll(r.Name, message)
+	sendNotices(config.Feeds, r.Name, message)
 }
 
 func onMergeRequest(r *gitlab.Repo, m map[string]interface{}) {
@@ -184,5 +184,5 @@ func onMergeRequest(r *gitlab.Repo, m map[string]interface{}) {
 		log.Printf("Merge Request action we don't handle: %s", action)
 		return
 	}
-	sendNoticeToAll(r.Name, message)
+	sendNotices(config.Feeds, r.Name, message)
 }

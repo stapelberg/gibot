@@ -85,9 +85,9 @@ func sendNotice(channel, categ, body string) {
 	})
 }
 
-func sendNoticeToAll(categ, body string) {
+func sendNotices(chans []string, categ, body string) {
 	message := fmt.Sprintf("[%s] %s", categ, body)
-	for _, channel := range config.Chans {
+	for _, channel := range chans {
 		throttle.Send(&irc.Message{
 			Command:  irc.NOTICE,
 			Params:   []string{channel},

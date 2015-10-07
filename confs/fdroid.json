@@ -5,6 +5,9 @@
 		"#fdroid",
 		"#fdroid-dev"
 	],
+	"feeds": [
+		"#fdroid"
+	],
 	"repos": [
 		{
 			"name": "client",

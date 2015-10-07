@@ -38,6 +38,7 @@ var config struct {
 	Pass   string
 	TLS    bool
 	Chans  []string
+	Feeds  []string
 	Repos  []site.Repo
 }
 
@@ -52,6 +53,7 @@ func main() {
 	log.Printf("server = %s", config.Server)
 	log.Printf("tls    = %t", config.TLS)
 	log.Printf("chans  = %s", strings.Join(config.Chans, ", "))
+	log.Printf("feeds  = %s", strings.Join(config.Feeds, ", "))
 
 	repos = make(map[string]*gitlab.Repo, len(config.Repos))
 	for i := range config.Repos {
