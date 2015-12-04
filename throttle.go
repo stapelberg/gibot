@@ -21,10 +21,16 @@ type throttler struct {
 func (t *throttler) Loop() {
 	for {
 		m := <-t.sendc
-		if err := t.sender.Send(m); err != nil {
-			log.Printf("Error sending message: %v", err)
+		for {
+			err := t.sender.Send(m)
+			if err != nil {
+				time.Sleep(timeBetweenMessages * 2)
+				log.Printf("Error sending message: %v", err)
+			} else {
+				time.Sleep(timeBetweenMessages)
+				break
+			}
 		}
-		// time.Sleep(timeBetweenMessages)
 	}
 }
 
