@@ -82,8 +82,8 @@ func main() {
 	}
 	registerHandlers(bot)
 	throttle = throttler{
-		sender: bot.Sender,
-		sendc:  make(chan *irc.Message),
+		bot:   bot,
+		sendc: make(chan *irc.Message),
 	}
 	go throttle.Loop()
 	go webhookListen()
