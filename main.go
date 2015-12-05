@@ -69,7 +69,7 @@ func main() {
 	ircConfig := ircx.Config{
 		User:       user,
 		Password:   config.Pass,
-		MaxRetries: 10,
+		MaxRetries: 100,
 	}
 	if config.TLS {
 		ircConfig.TLSConfig = &tls.Config{}
