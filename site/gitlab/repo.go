@@ -15,7 +15,7 @@ import (
 
 const (
 	titleLength = 50
-	shaLength   = 6
+	shaLength   = 8
 )
 
 type Repo struct {
@@ -33,7 +33,7 @@ func NewRepo(r *site.Repo) *Repo {
 	issueRe.Longest()
 	pullRe := regexp.MustCompile(`(` + strings.Join(r.Aliases, "|") + `)!([1-9][0-9]*)`)
 	pullRe.Longest()
-	commitRe := regexp.MustCompile(`\b[0-9a-f]{6,20}\b`)
+	commitRe := regexp.MustCompile(`\b[0-9a-f]{8,20}\b`)
 	commitRe.Longest()
 	return &Repo{
 		Name:     r.Name,
