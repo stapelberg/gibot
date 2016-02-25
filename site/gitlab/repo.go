@@ -115,7 +115,7 @@ func (r *Repo) PullInfo(id int) (string, error) {
 		return "", err
 	}
 	title := ShortTitle(merge.Title)
-	return fmt.Sprintf("#%d: %s - %s", id, title, r.MergeURL(id)), nil
+	return fmt.Sprintf("!%d: %s - %s", id, title, r.MergeURL(id)), nil
 }
 
 func (r *Repo) GetCommit(sha string) (*client.Commit, error) {
