@@ -101,8 +101,8 @@ func getBranch(ref string) string {
 }
 
 func onPush(r *gitlab.Repo, m map[string]interface{}) {
-	userId := toInt(m["user_id"])
-	user, err := r.GetUser(userId)
+	userID := toInt(m["user_id"])
+	user, err := r.GetUser(userID)
 	if err != nil {
 		log.Printf("Unknown user: %v", err)
 		return
