@@ -12,8 +12,8 @@ It will read a config file from `config.json` by default. See the
 [example config](confs/fdroid.json) that the F-Droid project uses, for
 instance.
 
-`nick` and `server` are self-explanatory - it configures how the bot
-will connect to IRC.
+`user`, `nick` and `server` are self-explanatory - it configures how the
+bot will connect to IRC.
 
 `chans` are the channels that the bot will join and listen for messages
 on.

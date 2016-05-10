@@ -1,4 +1,5 @@
 {
+	"user": "gibot",
 	"nick": "[gibot]",
 	"server": "chat.freenode.net:6667",
 	"chans": [

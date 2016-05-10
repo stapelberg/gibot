@@ -21,8 +21,6 @@ import (
 	"github.com/sorcix/irc"
 )
 
-const user = "gibot"
-
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
 
@@ -35,6 +33,7 @@ var (
 var config struct {
 	Nick   string
 	Server string
+	User   string
 	Pass   string
 	TLS    bool
 	Chans  []string
@@ -67,7 +66,7 @@ func main() {
 	allRe = joinRegexes(repos)
 
 	ircConfig := ircx.Config{
-		User:       user,
+		User:       config.User,
 		Password:   config.Pass,
 		MaxRetries: 100,
 	}
