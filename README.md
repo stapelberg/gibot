@@ -28,7 +28,8 @@ For each of the repos, its feed will be posted to the channels in
 `feeds`. On top of that, the bot will listen for messages mentioning
 issues, pull requests and commits and it will link them.
 
-For example, in the example config:
+For example, in the example config, the gitlab setup for F-Droid will
+result in the following behaviour:
 
 * `#10`, `c#10`, `client#10` and `fdroidclient#10` will make the bot
   link the issue number 10 on fdroidclient
