@@ -174,11 +174,7 @@ func onMergeRequest(r *gitlab.Repo, m map[string]interface{}) {
 		message = fmt.Sprintf("%s opened !%d: %s - %s", username, iid, title, url)
 	case "merge":
 		message = fmt.Sprintf("%s merged !%d: %s - %s", username, iid, title, url)
-	case "close":
-		message = fmt.Sprintf("%s closed !%d: %s - %s", username, iid, title, url)
-	case "reopen":
-		message = fmt.Sprintf("%s reopened !%d: %s - %s", username, iid, title, url)
-	case "update":
+	case "close", "reopen", "update":
 		return
 	default:
 		log.Printf("Merge Request action we don't handle: %s", action)
