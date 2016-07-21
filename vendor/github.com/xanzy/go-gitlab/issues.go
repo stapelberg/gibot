@@ -17,6 +17,7 @@
 package gitlab
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -43,37 +44,45 @@ type Issue struct {
 	Description string   `json:"description"`
 	Labels      []string `json:"labels"`
 	Milestone   struct {
-		ID          int       `json:"id"`
-		Title       string    `json:"title"`
-		Description string    `json:"description"`
-		DueDate     string    `json:"due_date"`
-		State       string    `json:"state"`
-		UpdatedAt   time.Time `json:"updated_at"`
-		CreatedAt   time.Time `json:"created_at"`
+		ID          int        `json:"id"`
+		Title       string     `json:"title"`
+		Description string     `json:"description"`
+		DueDate     string     `json:"due_date"`
+		State       string     `json:"state"`
+		UpdatedAt   *time.Time `json:"updated_at"`
+		CreatedAt   *time.Time `json:"created_at"`
 	} `json:"milestone"`
 	Assignee struct {
-		ID        int       `json:"id"`
-		Username  string    `json:"username"`
-		Email     string    `json:"email"`
-		Name      string    `json:"name"`
-		State     string    `json:"state"`
-		CreatedAt time.Time `json:"created_at"`
+		ID        int        `json:"id"`
+		Username  string     `json:"username"`
+		Email     string     `json:"email"`
+		Name      string     `json:"name"`
+		State     string     `json:"state"`
+		CreatedAt *time.Time `json:"created_at"`
 	} `json:"assignee"`
 	Author struct {
-		ID        int       `json:"id"`
-		Username  string    `json:"username"`
-		Email     string    `json:"email"`
-		Name      string    `json:"name"`
-		State     string    `json:"state"`
-		CreatedAt time.Time `json:"created_at"`
+		ID        int        `json:"id"`
+		Username  string     `json:"username"`
+		Email     string     `json:"email"`
+		Name      string     `json:"name"`
+		State     string     `json:"state"`
+		CreatedAt *time.Time `json:"created_at"`
 	} `json:"author"`
-	State     string    `json:"state"`
-	UpdatedAt time.Time `json:"updated_at"`
-	CreatedAt time.Time `json:"created_at"`
+	State     string     `json:"state"`
+	UpdatedAt *time.Time `json:"updated_at"`
+	CreatedAt *time.Time `json:"created_at"`
 }
 
 func (i Issue) String() string {
 	return Stringify(i)
+}
+
+// Labels is a custom type with specific marshaling characteristics.
+type Labels []string
+
+// MarshalJSON implements the json.Marshaler interface.
+func (l *Labels) MarshalJSON() ([]byte, error) {
+	return json.Marshal(strings.Join(*l, ","))
 }
 
 // ListIssuesOptions represents the available ListIssues() options.
@@ -81,10 +90,10 @@ func (i Issue) String() string {
 // GitLab API docs: http://doc.gitlab.com/ce/api/issues.html#list-issues
 type ListIssuesOptions struct {
 	ListOptions
-	State   string   `url:"state,omitempty" json:"state,omitempty"`
-	Labels  []string `url:"labels,omitempty" json:"labels,omitempty"`
-	OrderBy string   `url:"order_by,omitempty" json:"order_by,omitempty"`
-	Sort    string   `url:"sort,omitempty" json:"sort,omitempty"`
+	State   *string `url:"state,omitempty" json:"state,omitempty"`
+	Labels  Labels  `url:"labels,comma,omitempty" json:"labels,omitempty"`
+	OrderBy *string `url:"order_by,omitempty" json:"order_by,omitempty"`
+	Sort    *string `url:"sort,omitempty" json:"sort,omitempty"`
 }
 
 // ListIssues gets all issues created by authenticated user. This function
@@ -111,12 +120,12 @@ func (s *IssuesService) ListIssues(opt *ListIssuesOptions) ([]*Issue, *Response,
 // GitLab API docs: http://doc.gitlab.com/ce/api/issues.html#list-issues
 type ListProjectIssuesOptions struct {
 	ListOptions
-	IID       int      `url:"iid,omitempty" json:"iid,omitempty"`
-	State     string   `url:"state,omitempty" json:"state,omitempty"`
-	Labels    []string `url:"labels,omitempty" json:"labels,omitempty"`
-	Milestone string   `url:"milestone,omitempty" json:"milestone,omitempty"`
-	OrderBy   string   `url:"order_by,omitempty" json:"order_by,omitempty"`
-	Sort      string   `url:"sort,omitempty" json:"sort,omitempty"`
+	IID       *int    `url:"iid,omitempty" json:"iid,omitempty"`
+	State     *string `url:"state,omitempty" json:"state,omitempty"`
+	Labels    Labels  `url:"labels,comma,omitempty" json:"labels,omitempty"`
+	Milestone *string `url:"milestone,omitempty" json:"milestone,omitempty"`
+	OrderBy   *string `url:"order_by,omitempty" json:"order_by,omitempty"`
+	Sort      *string `url:"sort,omitempty" json:"sort,omitempty"`
 }
 
 // ListProjectIssues gets a list of project issues. This function accepts
@@ -174,11 +183,11 @@ func (s *IssuesService) GetIssue(pid interface{}, issue int) (*Issue, *Response,
 //
 // GitLab API docs: http://doc.gitlab.com/ce/api/issues.html#new-issues
 type CreateIssueOptions struct {
-	Title       string   `url:"title,omitempty" json:"title,omitempty"`
-	Description string   `url:"description,omitempty" json:"description,omitempty"`
-	AssigneeID  int      `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
-	MilestoneID int      `url:"milestone_id,omitempty" json:"milestone_id,omitempty"`
-	Labels      []string `url:"labels,omitempty" json:"labels,omitempty"`
+	Title       *string `url:"title,omitempty" json:"title,omitempty"`
+	Description *string `url:"description,omitempty" json:"description,omitempty"`
+	AssigneeID  *int    `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
+	MilestoneID *int    `url:"milestone_id,omitempty" json:"milestone_id,omitempty"`
+	Labels      Labels  `url:"labels,comma,omitempty" json:"labels,omitempty"`
 }
 
 // CreateIssue creates a new project issue.
@@ -192,9 +201,6 @@ func (s *IssuesService) CreateIssue(
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/issues", url.QueryEscape(project))
-
-	// This is needed to get a single, comma separated string
-	opt.Labels = []string{strings.Join(opt.Labels, ",")}
 
 	req, err := s.client.NewRequest("POST", u, opt)
 	if err != nil {
@@ -216,12 +222,12 @@ func (s *IssuesService) CreateIssue(
 //
 // GitLab API docs: http://doc.gitlab.com/ce/api/issues.html#edit-issues
 type UpdateIssueOptions struct {
-	Title       string   `url:"title,omitempty" json:"title,omitempty"`
-	Description string   `url:"description,omitempty" json:"description,omitempty"`
-	AssigneeID  int      `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
-	MilestoneID int      `url:"milestone_id,omitempty" json:"milestone_id,omitempty"`
-	Labels      []string `url:"labels,omitempty" json:"labels,omitempty"`
-	StateEvent  string   `url:"state_event,omitempty" json:"state_event,omitempty"`
+	Title       *string `url:"title,omitempty" json:"title,omitempty"`
+	Description *string `url:"description,omitempty" json:"description,omitempty"`
+	AssigneeID  *int    `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
+	MilestoneID *int    `url:"milestone_id,omitempty" json:"milestone_id,omitempty"`
+	Labels      Labels  `url:"labels,comma,omitempty" json:"labels,omitempty"`
+	StateEvent  *string `url:"state_event,omitempty" json:"state_event,omitempty"`
 }
 
 // UpdateIssue updates an existing project issue. This function is also used
@@ -237,9 +243,6 @@ func (s *IssuesService) UpdateIssue(
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/issues/%d", url.QueryEscape(project), issue)
-
-	// This is needed to get a single, comma separated string
-	opt.Labels = []string{strings.Join(opt.Labels, ",")}
 
 	req, err := s.client.NewRequest("PUT", u, opt)
 	if err != nil {
@@ -270,10 +273,5 @@ func (s *IssuesService) DeleteIssue(pid interface{}, issue int) (*Response, erro
 		return nil, err
 	}
 
-	resp, err := s.client.Do(req, nil)
-	if err != nil {
-		return resp, err
-	}
-
-	return resp, err
+	return s.client.Do(req, nil)
 }
