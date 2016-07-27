@@ -74,7 +74,9 @@ func (r *Repo) IssueURL(id int) string {
 
 func (r *Repo) GetIssue(id int) (*client.Issue, error) {
 	issues, _, err := r.Client.Issues.ListProjectIssues(r.Path,
-		&client.ListProjectIssuesOptions{IID: id})
+		&client.ListProjectIssuesOptions{
+			IID: client.Int(id),
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +97,9 @@ func (r *Repo) IssueInfo(id int) (string, error) {
 
 func (r *Repo) GetMergeRequest(id int) (*client.MergeRequest, error) {
 	merges, _, err := r.Client.MergeRequests.ListMergeRequests(r.Path,
-		&client.ListMergeRequestsOptions{IID: id})
+		&client.ListMergeRequestsOptions{
+			IID: client.Int(id),
+		})
 	if err != nil {
 		return nil, err
 	}
