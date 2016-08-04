@@ -40,6 +40,18 @@
 				"fdroiddata"
 			],
 			"token": "privatetoken"
+		},
+		{
+			"name": "privext",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/privileged-extension",
+			"aliases": [
+				"p",
+				"privileged",
+				"extension",
+				"privileged-extension"
+			],
+			"token": "privatetoken"
 		}
 	]
 
