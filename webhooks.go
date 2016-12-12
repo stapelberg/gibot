@@ -39,6 +39,7 @@ func gitlabHandler(reponame string) func(http.ResponseWriter, *http.Request) {
 		panic("unknown repo")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
 		event := strings.TrimSpace(r.Header.Get("X-Gitlab-Event"))
 		var err error
 		switch event {
@@ -67,9 +68,9 @@ func getBranch(ref string) string {
 	return ""
 }
 
-func onPush(r *gitlab.Repo, rc io.ReadCloser) error {
+func onPush(r *gitlab.Repo, body io.Reader) error {
 	var pe api.PushEvent
-	if err := json.NewDecoder(rc).Decode(&pe); err != nil {
+	if err := json.NewDecoder(body).Decode(&pe); err != nil {
 		return fmt.Errorf("invalid push event body: %v", err)
 	}
 	user, err := r.GetUser(pe.UserID)
@@ -99,9 +100,9 @@ func onPush(r *gitlab.Repo, rc io.ReadCloser) error {
 	return nil
 }
 
-func onIssue(r *gitlab.Repo, rc io.ReadCloser) error {
+func onIssue(r *gitlab.Repo, body io.Reader) error {
 	var ie api.IssueEvent
-	if err := json.NewDecoder(rc).Decode(&ie); err != nil {
+	if err := json.NewDecoder(body).Decode(&ie); err != nil {
 		return fmt.Errorf("invalid issue event body: %v", err)
 	}
 	attrs := ie.ObjectAttributes
@@ -126,9 +127,9 @@ func onIssue(r *gitlab.Repo, rc io.ReadCloser) error {
 	return nil
 }
 
-func onMergeRequest(r *gitlab.Repo, rc io.ReadCloser) error {
+func onMergeRequest(r *gitlab.Repo, body io.Reader) error {
 	var ie api.MergeEvent
-	if err := json.NewDecoder(rc).Decode(&ie); err != nil {
+	if err := json.NewDecoder(body).Decode(&ie); err != nil {
 		return fmt.Errorf("invalid issue event body: %v", err)
 	}
 	attrs := ie.ObjectAttributes
