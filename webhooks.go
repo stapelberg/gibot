@@ -6,11 +6,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/mvdan/gibot/site/gitlab"
+
+	api "github.com/xanzy/go-gitlab"
 )
 
 const listenAddr = ":9990"
@@ -29,63 +33,26 @@ func listenRepo(repo *gitlab.Repo) {
 	log.Printf("Receiving webhooks for %s on %s%s", repo.Name, listenAddr, path)
 }
 
-func toInt(v interface{}) int {
-	i, ok := v.(float64)
-	if !ok {
-		return 0
-	}
-	return int(i)
-}
-
-func toStr(v interface{}) string {
-	s, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return s
-}
-
-func toSlice(v interface{}) []interface{} {
-	l, ok := v.([]interface{})
-	if !ok {
-		return []interface{}{}
-	}
-	return l
-}
-
-func toMap(v interface{}) map[string]interface{} {
-	m, ok := v.(map[string]interface{})
-	if !ok {
-		return map[string]interface{}{}
-	}
-	return m
-}
-
 func gitlabHandler(reponame string) func(http.ResponseWriter, *http.Request) {
 	repo, e := repos[reponame]
 	if !e {
 		panic("unknown repo")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		decoder := json.NewDecoder(r.Body)
-		m := make(map[string]interface{})
-		if err := decoder.Decode(&m); err != nil {
-			log.Printf("Error decoding webhook data: %v", err)
-			return
-		}
-		kind := toStr(m["object_kind"])
-		switch kind {
-		case "push":
-			onPush(repo, m)
-		case "issue":
-			onIssue(repo, m)
-		case "merge_request":
-			onMergeRequest(repo, m)
-		case "tag_push":
-		case "note":
+		event := strings.TrimSpace(r.Header.Get("X-Gitlab-Event"))
+		var err error
+		switch event {
+		case "Push Hook":
+			err = onPush(repo, r.Body)
+		case "Issue Hook":
+			err = onIssue(repo, r.Body)
+		case "Merge Request Hook":
+			err = onMergeRequest(repo, r.Body)
 		default:
-			log.Printf("Webhook event we don't handle: %s", kind)
-			return
+			log.Printf("Webhook event we don't handle: %s", event)
+		}
+		if err != nil {
+			log.Print(err)
 		}
 	}
 }
@@ -100,85 +67,85 @@ func getBranch(ref string) string {
 	return ""
 }
 
-func onPush(r *gitlab.Repo, m map[string]interface{}) {
-	userID := toInt(m["user_id"])
-	user, err := r.GetUser(userID)
+func onPush(r *gitlab.Repo, rc io.ReadCloser) error {
+	var pe api.PushEvent
+	if err := json.NewDecoder(rc).Decode(&pe); err != nil {
+		return fmt.Errorf("invalid push event body: %v", err)
+	}
+	user, err := r.GetUser(pe.UserID)
 	if err != nil {
-		log.Printf("Unknown user: %v", err)
-		return
+		return fmt.Errorf("unknown user: %v", err)
 	}
-	username := user.Username
-	branch := getBranch(toStr(m["ref"]))
+	branch := getBranch(pe.Ref)
 	if branch == "" {
-		return
+		return fmt.Errorf("no branch")
 	}
-	count := toInt(m["total_commits_count"])
 	var message string
-	if count > 1 {
-		before := toStr(m["before"])
-		after := toStr(m["after"])
-		url := r.CompareURL(before, after)
-		message = fmt.Sprintf("%s pushed %d commits to %s - %s", username, count, branch, url)
+	if pe.TotalCommitsCount > 1 {
+		url := r.CompareURL(pe.Before, pe.After)
+		message = fmt.Sprintf("%s pushed %d commits to %s - %s",
+			user.Username, pe.TotalCommitsCount, branch, url)
 	} else {
-		commits := toSlice(m["commits"])
-		if len(commits) == 0 {
-			log.Printf("Empty commits")
-			return
+		if len(pe.Commits) == 0 {
+			return fmt.Errorf("empty commits")
 		}
-		commit := toMap(commits[0])
-		title := gitlab.ShortTitle(toStr(commit["message"]))
-		sha := toStr(commit["id"])
-		short := gitlab.ShortCommit(sha)
-		url := r.CommitURL(short)
-		message = fmt.Sprintf("%s pushed to %s: %s - %s", username, branch, title, url)
+		commit := pe.Commits[0]
+		title := gitlab.ShortTitle(commit.Title)
+		short := gitlab.ShortCommit(commit.ID)
+		message = fmt.Sprintf("%s pushed to %s: %s - %s",
+			user.Username, branch, title, r.CommitURL(short))
 	}
 	sendNotices(config.Feeds, r.Name, message)
+	return nil
 }
 
-func onIssue(r *gitlab.Repo, m map[string]interface{}) {
-	user := toMap(m["user"])
-	username := toStr(user["username"])
-	attrs := toMap(m["object_attributes"])
-	iid := toInt(attrs["iid"])
-	title := gitlab.ShortTitle(toStr(attrs["title"]))
-	url := toStr(attrs["url"])
-	action := toStr(attrs["action"])
+func onIssue(r *gitlab.Repo, rc io.ReadCloser) error {
+	var ie api.IssueEvent
+	if err := json.NewDecoder(rc).Decode(&ie); err != nil {
+		return fmt.Errorf("invalid issue event body: %v", err)
+	}
+	attrs := ie.ObjectAttributes
+	title := gitlab.ShortTitle(attrs.Title)
 	var message string
-	switch action {
+	switch attrs.Action {
 	case "open":
-		message = fmt.Sprintf("%s opened #%d: %s - %s", username, iid, title, url)
+		message = fmt.Sprintf("%s opened #%d: %s - %s",
+			ie.User.Username, attrs.Iid, title, attrs.URL)
 	case "close":
-		message = fmt.Sprintf("%s closed #%d: %s - %s", username, iid, title, url)
+		message = fmt.Sprintf("%s closed #%d: %s - %s",
+			ie.User.Username, attrs.Iid, title, attrs.URL)
 	case "reopen":
-		message = fmt.Sprintf("%s reopened #%d: %s - %s", username, iid, title, url)
+		message = fmt.Sprintf("%s reopened #%d: %s - %s",
+			ie.User.Username, attrs.Iid, title, attrs.URL)
 	case "update":
-		return
+		return nil
 	default:
-		log.Printf("Issue action we don't handle: %s", action)
-		return
+		return fmt.Errorf("issue action we don't handle: %s", attrs.Action)
 	}
 	sendNotices(config.Feeds, r.Name, message)
+	return nil
 }
 
-func onMergeRequest(r *gitlab.Repo, m map[string]interface{}) {
-	user := toMap(m["user"])
-	username := toStr(user["username"])
-	attrs := toMap(m["object_attributes"])
-	iid := toInt(attrs["iid"])
-	title := gitlab.ShortTitle(toStr(attrs["title"]))
-	url := toStr(attrs["url"])
-	action := toStr(attrs["action"])
+func onMergeRequest(r *gitlab.Repo, rc io.ReadCloser) error {
+	var ie api.MergeEvent
+	if err := json.NewDecoder(rc).Decode(&ie); err != nil {
+		return fmt.Errorf("invalid issue event body: %v", err)
+	}
+	attrs := ie.ObjectAttributes
+	title := gitlab.ShortTitle(attrs.Title)
 	var message string
-	switch action {
+	switch attrs.Action {
 	case "open":
-		message = fmt.Sprintf("%s opened !%d: %s - %s", username, iid, title, url)
+		message = fmt.Sprintf("%s opened !%d: %s - %s",
+			ie.User.Username, attrs.Iid, title, attrs.URL)
 	case "merge":
-		message = fmt.Sprintf("%s merged !%d: %s - %s", username, iid, title, url)
+		message = fmt.Sprintf("%s merged !%d: %s - %s",
+			ie.User.Username, attrs.Iid, title, attrs.URL)
 	case "close", "reopen", "update":
-		return
+		return nil
 	default:
-		log.Printf("Merge Request action we don't handle: %s", action)
-		return
+		return fmt.Errorf("merge action we don't handle: %s", attrs.Action)
 	}
 	sendNotices(config.Feeds, r.Name, message)
+	return nil
 }
