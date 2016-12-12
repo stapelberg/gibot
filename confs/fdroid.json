@@ -42,6 +42,17 @@
 			"token": "privatetoken"
 		},
 		{
+			"name": "website",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/fdroid-website",
+			"aliases": [
+				"w",
+				"web",
+				"site"
+			],
+			"token": "privatetoken"
+		},
+		{
 			"name": "privext",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/privileged-extension",
