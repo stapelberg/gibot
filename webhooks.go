@@ -17,44 +17,33 @@ import (
 	api "github.com/xanzy/go-gitlab"
 )
 
-const listenAddr = ":9990"
+const (
+	listenAddr = ":9990"
+	listenPath = "/webhooks/gitlab"
+)
 
 func webhookListen() {
-	for _, repo := range repos {
-		listenRepo(repo)
-	}
-
+	http.HandleFunc(listenPath, gitlabHandler)
+	log.Printf("Receiving webhooks on %s", listenPath)
 	log.Fatal(http.ListenAndServe(listenAddr, nil))
 }
 
-func listenRepo(repo *gitlab.Repo) {
-	path := fmt.Sprintf("/webhooks/gitlab/%s", repo.Name)
-	http.HandleFunc(path, gitlabHandler(repo.Name))
-	log.Printf("Receiving webhooks for %s on %s%s", repo.Name, listenAddr, path)
-}
-
-func gitlabHandler(reponame string) func(http.ResponseWriter, *http.Request) {
-	repo, e := repos[reponame]
-	if !e {
-		panic("unknown repo")
+func gitlabHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	event := strings.TrimSpace(r.Header.Get("X-Gitlab-Event"))
+	var err error
+	switch event {
+	case "Push Hook":
+		err = onPush(r.Body)
+	case "Issue Hook":
+		err = onIssue(r.Body)
+	case "Merge Request Hook":
+		err = onMergeRequest(r.Body)
+	default:
+		log.Printf("Webhook event we don't handle: %s", event)
 	}
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		event := strings.TrimSpace(r.Header.Get("X-Gitlab-Event"))
-		var err error
-		switch event {
-		case "Push Hook":
-			err = onPush(repo, r.Body)
-		case "Issue Hook":
-			err = onIssue(repo, r.Body)
-		case "Merge Request Hook":
-			err = onMergeRequest(repo, r.Body)
-		default:
-			log.Printf("Webhook event we don't handle: %s", event)
-		}
-		if err != nil {
-			log.Print(err)
-		}
+	if err != nil {
+		log.Print(err)
 	}
 }
 
@@ -68,12 +57,24 @@ func getBranch(ref string) string {
 	return ""
 }
 
-func onPush(r *gitlab.Repo, body io.Reader) error {
+func getRepo(apiRepo *api.Repository) (*gitlab.Repo, error) {
+	repo := repos[apiRepo.Homepage]
+	if repo == nil {
+		return nil, fmt.Errorf("unknown repo: %s", apiRepo.Homepage)
+	}
+	return repo, nil
+}
+
+func onPush(body io.Reader) error {
 	var pe api.PushEvent
 	if err := json.NewDecoder(body).Decode(&pe); err != nil {
 		return fmt.Errorf("invalid push event body: %v", err)
 	}
-	user, err := r.GetUser(pe.UserID)
+	repo, err := getRepo(pe.Repository)
+	if err != nil {
+		return err
+	}
+	user, err := repo.GetUser(pe.UserID)
 	if err != nil {
 		return fmt.Errorf("unknown user: %v", err)
 	}
@@ -83,7 +84,7 @@ func onPush(r *gitlab.Repo, body io.Reader) error {
 	}
 	var message string
 	if pe.TotalCommitsCount > 1 {
-		url := r.CompareURL(pe.Before, pe.After)
+		url := repo.CompareURL(pe.Before, pe.After)
 		message = fmt.Sprintf("%s pushed %d commits to %s - %s",
 			user.Username, pe.TotalCommitsCount, branch, url)
 	} else {
@@ -91,16 +92,17 @@ func onPush(r *gitlab.Repo, body io.Reader) error {
 			return fmt.Errorf("empty commits")
 		}
 		commit := pe.Commits[0]
-		title := gitlab.ShortTitle(commit.Title)
+		// Message here means Title, how useful.
+		title := gitlab.ShortTitle(commit.Message)
 		short := gitlab.ShortCommit(commit.ID)
 		message = fmt.Sprintf("%s pushed to %s: %s - %s",
-			user.Username, branch, title, r.CommitURL(short))
+			user.Username, branch, title, repo.CommitURL(short))
 	}
-	sendNotices(config.Feeds, r.Name, message)
+	sendNotices(config.Feeds, repo.Name, message)
 	return nil
 }
 
-func onIssue(r *gitlab.Repo, body io.Reader) error {
+func onIssue(body io.Reader) error {
 	var ie api.IssueEvent
 	if err := json.NewDecoder(body).Decode(&ie); err != nil {
 		return fmt.Errorf("invalid issue event body: %v", err)
@@ -123,30 +125,38 @@ func onIssue(r *gitlab.Repo, body io.Reader) error {
 	default:
 		return fmt.Errorf("issue action we don't handle: %s", attrs.Action)
 	}
-	sendNotices(config.Feeds, r.Name, message)
+	repo, err := getRepo(ie.Repository)
+	if err != nil {
+		return err
+	}
+	sendNotices(config.Feeds, repo.Name, message)
 	return nil
 }
 
-func onMergeRequest(r *gitlab.Repo, body io.Reader) error {
-	var ie api.MergeEvent
-	if err := json.NewDecoder(body).Decode(&ie); err != nil {
+func onMergeRequest(body io.Reader) error {
+	var me api.MergeEvent
+	if err := json.NewDecoder(body).Decode(&me); err != nil {
 		return fmt.Errorf("invalid issue event body: %v", err)
 	}
-	attrs := ie.ObjectAttributes
+	attrs := me.ObjectAttributes
 	title := gitlab.ShortTitle(attrs.Title)
 	var message string
 	switch attrs.Action {
 	case "open":
 		message = fmt.Sprintf("%s opened !%d: %s - %s",
-			ie.User.Username, attrs.Iid, title, attrs.URL)
+			me.User.Username, attrs.Iid, title, attrs.URL)
 	case "merge":
 		message = fmt.Sprintf("%s merged !%d: %s - %s",
-			ie.User.Username, attrs.Iid, title, attrs.URL)
+			me.User.Username, attrs.Iid, title, attrs.URL)
 	case "close", "reopen", "update":
 		return nil
 	default:
 		return fmt.Errorf("merge action we don't handle: %s", attrs.Action)
 	}
-	sendNotices(config.Feeds, r.Name, message)
+	repo, err := getRepo(me.Repository)
+	if err != nil {
+		return err
+	}
+	sendNotices(config.Feeds, repo.Name, message)
 	return nil
 }

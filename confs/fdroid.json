@@ -47,10 +47,18 @@
 			"path": "fdroid/privileged-extension",
 			"aliases": [
 				"p",
+				"priv",
 				"privileged",
 				"extension",
 				"privileged-extension"
 			],
+			"token": "privatetoken"
+		},
+		{
+			"name": "artwork",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/artwork",
+			"aliases": ["art"],
 			"token": "privatetoken"
 		}
 	]

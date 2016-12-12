@@ -24,7 +24,7 @@ import (
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
 
-	repos map[string]*gitlab.Repo
+	repos map[string]*gitlab.Repo // by url
 	allRe *regexp.Regexp
 
 	pathRegex = regexp.MustCompile("[a-zA-Z0-9]+/[a-zA-Z0-9]+")
@@ -57,11 +57,12 @@ func main() {
 	repos = make(map[string]*gitlab.Repo, len(config.Repos))
 	for i := range config.Repos {
 		r := &config.Repos[i]
+		url := r.Prefix + "/" + r.Path
 		r.Aliases = append(r.Aliases, r.Name)
-		if _, e := repos[r.Name]; e {
-			log.Fatalf("Duplicate repo name found: %s", r.Name)
+		if _, e := repos[url]; e {
+			log.Fatalf("Duplicate repo url found: %s", url)
 		}
-		repos[r.Name] = gitlab.NewRepo(r)
+		repos[url] = gitlab.NewRepo(r)
 	}
 	allRe = joinRegexes(repos)
 
