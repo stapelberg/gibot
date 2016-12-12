@@ -46,10 +46,16 @@
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/fdroid-website",
 			"aliases": [
-				"w",
 				"web",
 				"site"
 			],
+			"token": "privatetoken"
+		},
+		{
+			"name": "webpkgs",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/fdroid-website-packages",
+			"aliases": ["pkgs"],
 			"token": "privatetoken"
 		},
 		{
