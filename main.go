@@ -28,20 +28,20 @@ var (
 	allRe *regexp.Regexp
 
 	pathRegex = regexp.MustCompile("[a-zA-Z0-9]+/[a-zA-Z0-9]+")
+
+	config struct {
+		Nick   string
+		Server string
+		User   string
+		Pass   string
+		TLS    bool
+		Chans  []string
+		Feeds  []string
+		Repos  []site.Repo
+	}
+
+	throttle throttler
 )
-
-var config struct {
-	Nick   string
-	Server string
-	User   string
-	Pass   string
-	TLS    bool
-	Chans  []string
-	Feeds  []string
-	Repos  []site.Repo
-}
-
-var throttle throttler
 
 func main() {
 	flag.Parse()
