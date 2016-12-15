@@ -65,6 +65,8 @@ func getRepo(apiRepo *api.Repository) (*gitlab.Repo, error) {
 	return repo, nil
 }
 
+var mergeMessage = regexp.MustCompile(`^[Mm]erge `)
+
 func onPush(body io.Reader) error {
 	var pe api.PushEvent
 	if err := json.NewDecoder(body).Decode(&pe); err != nil {
@@ -82,21 +84,27 @@ func onPush(body io.Reader) error {
 	if branch == "" {
 		return fmt.Errorf("no branch")
 	}
-	var message string
-	if pe.TotalCommitsCount > 1 {
-		url := repo.CompareURL(pe.Before, pe.After)
-		message = fmt.Sprintf("%s pushed %d commits to %s - %s",
-			user.Username, pe.TotalCommitsCount, branch, url)
-	} else {
-		if len(pe.Commits) == 0 {
-			return fmt.Errorf("empty commits")
+	commits := make([]*api.Commit, 0, len(pe.Commits))
+	for _, c := range pe.Commits {
+		if mergeMessage.MatchString(c.Message) {
+			continue
 		}
-		commit := pe.Commits[0]
+		commits = append(commits, c)
+	}
+	var message string
+	switch len(commits) {
+	case 0:
+		return fmt.Errorf("empty commits")
+	case 1:
 		// Message here means Title, how useful.
-		title := gitlab.ShortTitle(commit.Message)
-		short := gitlab.ShortCommit(commit.ID)
+		title := gitlab.ShortTitle(commits[0].Message)
+		short := gitlab.ShortCommit(commits[0].ID)
 		message = fmt.Sprintf("%s pushed to %s: %s - %s",
 			user.Username, branch, title, repo.CommitURL(short))
+	default:
+		url := repo.CompareURL(pe.Before, pe.After)
+		message = fmt.Sprintf("%s pushed %d commits to %s - %s",
+			user.Username, len(commits), branch, url)
 	}
 	sendNotices(config.Feeds, repo.Name, message)
 	return nil
