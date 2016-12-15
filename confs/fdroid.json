@@ -14,41 +14,35 @@
 			"name": "client",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/fdroidclient",
-			"aliases": [
-				"",
-				"c",
-				"fdroidclient"
-			],
+			"aliases": ["", "c", "fdroidclient"],
 			"token": "privatetoken"
 		},
 		{
 			"name": "server",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/fdroidserver",
-			"aliases": [
-				"s",
-				"fdroidserver"
-			],
+			"aliases": ["s", "fdroidserver"],
 			"token": "privatetoken"
 		},
 		{
 			"name": "data",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/fdroiddata",
-			"aliases": [
-				"d",
-				"fdroiddata"
-			],
+			"aliases": ["d", "fdroiddata"],
+			"token": "privatetoken"
+		},
+		{
+			"name": "queue",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/queue",
+			"aliases": ["q"],
 			"token": "privatetoken"
 		},
 		{
 			"name": "website",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/fdroid-website",
-			"aliases": [
-				"web",
-				"site"
-			],
+			"aliases": ["web", "site"],
 			"token": "privatetoken"
 		},
 		{
@@ -62,13 +56,7 @@
 			"name": "privext",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/privileged-extension",
-			"aliases": [
-				"p",
-				"priv",
-				"privileged",
-				"extension",
-				"privileged-extension"
-			],
+			"aliases": ["p", "priv", "ext", "privileged-extension"],
 			"token": "privatetoken"
 		},
 		{
