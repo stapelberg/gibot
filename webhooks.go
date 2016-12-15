@@ -114,13 +114,7 @@ func onIssue(body io.Reader) error {
 	case "open":
 		message = fmt.Sprintf("%s opened #%d: %s - %s",
 			ie.User.Username, attrs.Iid, title, attrs.URL)
-	case "close":
-		message = fmt.Sprintf("%s closed #%d: %s - %s",
-			ie.User.Username, attrs.Iid, title, attrs.URL)
-	case "reopen":
-		message = fmt.Sprintf("%s reopened #%d: %s - %s",
-			ie.User.Username, attrs.Iid, title, attrs.URL)
-	case "update":
+	case "close", "reopen", "update":
 		return nil
 	default:
 		return fmt.Errorf("issue action we don't handle: %s", attrs.Action)
