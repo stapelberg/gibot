@@ -65,6 +65,13 @@
 			"path": "fdroid/artwork",
 			"aliases": ["art"],
 			"token": "privatetoken"
+		},
+		{
+			"name": "admin",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/admin",
+			"aliases": [],
+			"token": "privatetoken"
 		}
 	]
 
