@@ -147,10 +147,7 @@ func onMergeRequest(body io.Reader) error {
 	case "open":
 		message = fmt.Sprintf("%s opened !%d: %s - %s",
 			me.User.Username, attrs.Iid, title, attrs.URL)
-	case "merge":
-		message = fmt.Sprintf("%s merged !%d: %s - %s",
-			me.User.Username, attrs.Iid, title, attrs.URL)
-	case "close", "reopen", "update":
+	case "close", "reopen", "update", "merge":
 		return nil
 	default:
 		return fmt.Errorf("merge action we don't handle: %s", attrs.Action)
