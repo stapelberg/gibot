@@ -42,7 +42,7 @@
 			"name": "website",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/fdroid-website",
-			"aliases": ["web", "site"],
+			"aliases": ["w", "web", "site"],
 			"token": "privatetoken"
 		},
 		{
