@@ -32,10 +32,10 @@
 			"token": "privatetoken"
 		},
 		{
-			"name": "queue",
+			"name": "rfp",
 			"prefix": "https://gitlab.com",
-			"path": "fdroid/queue",
-			"aliases": ["q"],
+			"path": "fdroid/rfp",
+			"aliases": ["r"],
 			"token": "privatetoken"
 		},
 		{
