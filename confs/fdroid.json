@@ -49,7 +49,7 @@
 			"name": "jekyll-fdroid",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/jekyll-fdroid",
-			"aliases": ["j", jekyll"],
+			"aliases": ["j", "jekyll"],
 			"token": "privatetoken"
 		},
 		{
