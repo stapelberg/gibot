@@ -16,9 +16,10 @@ import (
 	"github.com/mvdan/gibot/site"
 	"github.com/mvdan/gibot/site/gitlab"
 
-	"github.com/mvdan/xurls"
 	"github.com/nickvanw/ircx"
 	"github.com/sorcix/irc"
+
+	"github.com/mvdan/xurls"
 )
 
 var (
