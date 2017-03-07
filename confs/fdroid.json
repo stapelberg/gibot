@@ -72,6 +72,13 @@
 			"path": "fdroid/admin",
 			"aliases": [],
 			"token": "privatetoken"
+		},
+		{
+			"name": "ci-images",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/ci-images",
+			"aliases": ["ci"],
+			"token": "privatetoken"
 		}
 	]
 
