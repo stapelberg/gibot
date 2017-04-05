@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -21,6 +22,8 @@ import (
 
 	"github.com/mvdan/xurls"
 )
+
+const listenAddr = ":9990"
 
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
@@ -87,8 +90,14 @@ func main() {
 		sendc: make(chan *irc.Message),
 	}
 	go throttle.Loop()
-	go webhookListen()
-	bot.HandleLoop()
+	go bot.HandleLoop()
+	http.HandleFunc("/gibot", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "pong")
+	})
+	http.HandleFunc("/gibot/gitlab", gitlabHandler)
+	http.HandleFunc("/gibot/discourse", discourseHandler)
+	log.Printf("Receiving webhooks on %s", listenAddr)
+	log.Fatal(http.ListenAndServe(listenAddr, nil))
 }
 
 func loadConfig(p string) error {

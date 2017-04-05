@@ -17,15 +17,29 @@ import (
 	api "github.com/xanzy/go-gitlab"
 )
 
-const (
-	listenAddr = ":9990"
-	listenPath = "/webhooks/gitlab"
-)
+type dscPayload struct {
+	Topic dscTopic `json:"topic"`
+}
 
-func webhookListen() {
-	http.HandleFunc(listenPath, gitlabHandler)
-	log.Printf("Receiving webhooks on %s", listenPath)
-	log.Fatal(http.ListenAndServe(listenAddr, nil))
+type dscTopic struct {
+	Title string `json:"title"`
+	Slug  string `json:"slug"`
+}
+
+func discourseHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	if r.Header.Get("X-Discourse-Event") != "topic_created" {
+		return
+	}
+	var pl dscPayload
+	if err := json.NewDecoder(r.Body).Decode(&pl); err != nil {
+		log.Printf("invalid event body: %v", err)
+		return
+	}
+	instance := r.Header.Get("X-Discourse-Instance")
+	url := fmt.Sprintf("%s/t/%s", instance, pl.Topic.Slug)
+	message := fmt.Sprintf("New thread: %q - %s", pl.Topic.Title, url)
+	sendNotices(config.Feeds, "forum", message)
 }
 
 func gitlabHandler(w http.ResponseWriter, r *http.Request) {
