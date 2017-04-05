@@ -53,6 +53,13 @@
 			"token": "privatetoken"
 		},
 		{
+			"name": "repomaker",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/repomaker",
+			"aliases": ["rm"],
+			"token": "privatetoken"
+		},
+		{
 			"name": "privext",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/privileged-extension",
