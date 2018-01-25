@@ -14,13 +14,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mvdan/gibot/site"
-	"github.com/mvdan/gibot/site/gitlab"
+	"mvdan.cc/gibot/site"
+	"mvdan.cc/gibot/site/gitlab"
 
 	"github.com/nickvanw/ircx"
 	"github.com/sorcix/irc"
-
-	"github.com/mvdan/xurls"
+	"mvdan.cc/xurls"
 )
 
 const listenAddr = ":9990"
@@ -143,7 +142,7 @@ func loadConfig(p string) error {
 }
 
 func joinRegexes(repos map[string]*gitlab.Repo) *regexp.Regexp {
-	all := []string{xurls.Strict.String()}
+	all := []string{xurls.Strict().String()}
 	for _, r := range repos {
 		all = append(all, r.IssueRe.String())
 		all = append(all, r.PullRe.String())

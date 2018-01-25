@@ -6,7 +6,7 @@ Simple IRC bot that helps software projects.
 
 ### Setup
 
-	go get -u github.com/mvdan/gibot
+	go get -u mvdan.cc/gibot
 
 It will read a config file from `config.json` by default. See the
 [example config](confs/fdroid.json) that the F-Droid project uses, for

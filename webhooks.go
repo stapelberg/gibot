@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mvdan/gibot/site/gitlab"
+	"mvdan.cc/gibot/site/gitlab"
 
 	api "github.com/xanzy/go-gitlab"
 )
@@ -98,27 +98,30 @@ func onPush(body io.Reader) error {
 	if branch == "" {
 		return fmt.Errorf("no branch")
 	}
-	commits := make([]*api.Commit, 0, len(pe.Commits))
+	number := 0
+	title, short := "", ""
 	for _, c := range pe.Commits {
 		if mergeMessage.MatchString(c.Message) {
 			continue
 		}
-		commits = append(commits, c)
+		if number == 0 {
+			title = gitlab.ShortTitle(c.Message)
+			short = gitlab.ShortCommit(c.ID)
+		}
+		number++
 	}
 	var message string
-	switch len(commits) {
+	switch number {
 	case 0:
 		return fmt.Errorf("empty commits")
 	case 1:
 		// Message here means Title, how useful.
-		title := gitlab.ShortTitle(commits[0].Message)
-		short := gitlab.ShortCommit(commits[0].ID)
 		message = fmt.Sprintf("%s pushed to %s: %s - %s",
 			user.Username, branch, title, repo.CommitURL(short))
 	default:
 		url := repo.CompareURL(pe.Before, pe.After)
 		message = fmt.Sprintf("%s pushed %d commits to %s - %s",
-			user.Username, len(commits), branch, url)
+			user.Username, number, branch, url)
 	}
 	sendNotices(config.Feeds, repo.Name, message)
 	return nil
@@ -135,7 +138,7 @@ func onIssue(body io.Reader) error {
 	switch attrs.Action {
 	case "open":
 		message = fmt.Sprintf("%s opened #%d: %s - %s",
-			ie.User.Username, attrs.Iid, title, attrs.URL)
+			ie.User.Username, attrs.IID, title, attrs.URL)
 	case "close", "reopen", "update":
 		return nil
 	default:
@@ -160,7 +163,7 @@ func onMergeRequest(body io.Reader) error {
 	switch attrs.Action {
 	case "open":
 		message = fmt.Sprintf("%s opened !%d: %s - %s",
-			me.User.Username, attrs.Iid, title, attrs.URL)
+			me.User.Username, attrs.IID, title, attrs.URL)
 	case "close", "reopen", "update", "merge":
 		return nil
 	default:

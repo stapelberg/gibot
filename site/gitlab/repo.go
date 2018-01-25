@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mvdan/gibot/site"
+	"mvdan.cc/gibot/site"
 
 	client "github.com/xanzy/go-gitlab"
 )
@@ -73,17 +73,11 @@ func (r *Repo) IssueURL(id int) string {
 }
 
 func (r *Repo) GetIssue(id int) (*client.Issue, error) {
-	issues, _, err := r.Client.Issues.ListProjectIssues(r.Path,
-		&client.ListProjectIssuesOptions{
-			IID: client.Int(id),
-		})
+	issue, _, err := r.Client.Issues.GetIssue(r.Path, id)
 	if err != nil {
 		return nil, err
 	}
-	if len(issues) < 1 {
-		return nil, fmt.Errorf("Not found")
-	}
-	return issues[0], nil
+	return issue, nil
 }
 
 func (r *Repo) IssueInfo(id int) (string, error) {
@@ -96,17 +90,11 @@ func (r *Repo) IssueInfo(id int) (string, error) {
 }
 
 func (r *Repo) GetMergeRequest(id int) (*client.MergeRequest, error) {
-	merges, _, err := r.Client.MergeRequests.ListMergeRequests(r.Path,
-		&client.ListMergeRequestsOptions{
-			IID: client.Int(id),
-		})
+	merge, _, err := r.Client.MergeRequests.GetMergeRequest(r.Path, id)
 	if err != nil {
 		return nil, err
 	}
-	if len(merges) < 1 {
-		return nil, fmt.Errorf("Not found")
-	}
-	return merges[0], nil
+	return merge, nil
 }
 
 func (r *Repo) MergeURL(id int) string {
