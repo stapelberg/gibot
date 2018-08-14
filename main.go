@@ -78,6 +78,7 @@ func main() {
 		ircConfig.TLSConfig = &tls.Config{}
 	}
 	bot := ircx.New(config.Server, config.Nick, ircConfig)
+	bot.SetLogger(bot.Logger())
 
 	log.Printf("Connecting...")
 	if err := bot.Connect(); err != nil {
