@@ -46,6 +46,13 @@
 			"token": "privatetoken"
 		},
 		{
+			"name": "website-search",
+			"prefix": "https://gitlab.com",
+			"path": "fdroid/fdroid-website-search",
+			"aliases": ["ws", "search"],
+			"token": "privatetoken"
+		},
+		{
 			"name": "jekyll-fdroid",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/jekyll-fdroid",
