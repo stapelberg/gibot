@@ -19,7 +19,7 @@ import (
 
 	"github.com/nickvanw/ircx"
 	"github.com/sorcix/irc"
-	"mvdan.cc/xurls"
+	"mvdan.cc/xurls/v2"
 )
 
 const listenAddr = ":9990"
