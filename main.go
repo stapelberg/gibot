@@ -22,8 +22,6 @@ import (
 	"mvdan.cc/xurls/v2"
 )
 
-const listenAddr = ":9990"
-
 func defaultConfigPath() string {
 	if os.Getenv("GOKRAZY_FIRST_START") == "1" {
 		// Make it easy for gokrazy users to run this main without specifying
@@ -35,6 +33,7 @@ func defaultConfigPath() string {
 
 var (
 	configPath = flag.String("c", defaultConfigPath(), "path to json config file")
+	listenAddr = flag.String("listen", ":9990", "[host]:port to listen on")
 
 	repos          map[string]*gitlab.Repo // by url
 	prejoinedChans = make(map[string]bool) // by channel name, e.g. #i3
@@ -120,8 +119,8 @@ func main() {
 	http.HandleFunc("/gibot/gitlab", gitlabHandler)
 	http.HandleFunc("/gibot/discourse", discourseHandler)
 	http.Handle("/gibot/github", githubHandler(config.GithubSecret))
-	log.Printf("Receiving webhooks on %s", listenAddr)
-	log.Fatal(http.ListenAndServe(listenAddr, nil))
+	log.Printf("Receiving webhooks on %s", *listenAddr)
+	log.Fatal(http.ListenAndServe(*listenAddr, nil))
 }
 
 func loadConfig(p string) error {
