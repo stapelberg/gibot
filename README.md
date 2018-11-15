@@ -18,8 +18,9 @@ bot will connect to IRC.
 `chans` are the channels that the bot will join and listen for messages
 on.
 
-`feeds` is the subset of channels in `chans` that the bot will post
-activity feed items on, such as when a new issue is created.
+`feeds` are the channels that the bot will post activity feed items on,
+such as when a new issue is created. `feeds` channels which are not
+listed in `chans` will be joined temporarily for posting.
 
 Finally, `repos` are the repos that the bot will use. The `token` has to
 be populated with your Gitlab API token.
