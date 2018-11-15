@@ -24,8 +24,17 @@ import (
 
 const listenAddr = ":9990"
 
+func defaultConfigPath() string {
+	if os.Getenv("GOKRAZY_FIRST_START") == "1" {
+		// Make it easy for gokrazy users to run this main without specifying
+		// any flags (which is cumbersome in gokrazy).
+		return "/perm/gibot.json"
+	}
+	return "gibot.json"
+}
+
 var (
-	configPath = flag.String("c", "gibot.json", "path to json config file")
+	configPath = flag.String("c", defaultConfigPath(), "path to json config file")
 
 	repos          map[string]*gitlab.Repo // by url
 	prejoinedChans = make(map[string]bool) // by channel name, e.g. #i3
@@ -51,7 +60,19 @@ var (
 func main() {
 	flag.Parse()
 	if err := loadConfig(*configPath); err != nil {
-		log.Fatalf("Could not load config: %v", err)
+		log.Printf("Could not load config: %v", err)
+		// gokrazy.org treats exit code 125 as a signal to not restart the
+		// process anymore. This way, two use-cases are covered:
+		//
+		// 1. Users who need a single instance of gibot can create
+		//    /perm/gibot.json and add mvdan.cc/gibot to their
+		//    gokr-packer command line.
+		//
+		// 2. Users who need multiple instances of gibot can create their own
+		//    wrappers which run /user/gibot and add mvdan.cc/gibot to
+		//    their gokr-packer command line. The auto-generated wrapper will
+		//    start gibot only once (as opposed to crashlooping forever).
+		os.Exit(125)
 	}
 	log.Printf("nick   = %s", config.Nick)
 	log.Printf("server = %s", config.Server)
