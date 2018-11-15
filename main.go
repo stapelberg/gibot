@@ -33,14 +33,15 @@ var (
 	pathRegex = regexp.MustCompile("[a-zA-Z0-9]+/[a-zA-Z0-9]+")
 
 	config struct {
-		Nick   string
-		Server string
-		User   string
-		Pass   string
-		TLS    bool
-		Chans  []string
-		Feeds  []string
-		Repos  []site.Repo
+		Nick         string
+		Server       string
+		User         string
+		Pass         string
+		TLS          bool
+		Chans        []string
+		Feeds        []string
+		Repos        []site.Repo
+		GithubSecret string
 	}
 
 	throttle throttler
@@ -96,6 +97,7 @@ func main() {
 	})
 	http.HandleFunc("/gibot/gitlab", gitlabHandler)
 	http.HandleFunc("/gibot/discourse", discourseHandler)
+	http.Handle("/gibot/github", githubHandler(config.GithubSecret))
 	log.Printf("Receiving webhooks on %s", listenAddr)
 	log.Fatal(http.ListenAndServe(listenAddr, nil))
 }

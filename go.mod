@@ -5,6 +5,7 @@ require (
 	github.com/go-logfmt/logfmt v0.3.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
+	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
 	github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515 // indirect
 	github.com/nickvanw/ircx v0.0.0-20180308140407-c3e9589d07fa
