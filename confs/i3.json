@@ -1,0 +1,17 @@
+{
+    "user": "i3commits",
+    "nick": "i3commits",
+    "server": "chat.freenode.net:6697",
+    "tls": true,
+    "feeds": [
+        "#i3"
+    ],
+    "GithubSecret": "redacted123",
+    "repos": [
+        {
+            "name": "i3",
+            "prefix": "https://github.com",
+            "path": "i3/i3"
+        }
+    ]
+}
