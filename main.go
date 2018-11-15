@@ -27,8 +27,9 @@ const listenAddr = ":9990"
 var (
 	configPath = flag.String("c", "gibot.json", "path to json config file")
 
-	repos map[string]*gitlab.Repo // by url
-	allRe *regexp.Regexp
+	repos          map[string]*gitlab.Repo // by url
+	prejoinedChans = make(map[string]bool) // by channel name, e.g. #i3
+	allRe          *regexp.Regexp
 
 	pathRegex = regexp.MustCompile("[a-zA-Z0-9]+/[a-zA-Z0-9]+")
 
@@ -117,8 +118,11 @@ func loadConfig(p string) error {
 	if config.Server == "" {
 		return fmt.Errorf("no server specified")
 	}
-	if len(config.Chans) < 1 {
-		return fmt.Errorf("no channels specified")
+	if len(config.Chans) < 1 && len(config.Feeds) < 1 {
+		return fmt.Errorf("no channels specified (need either chans or feeds)")
+	}
+	for _, c := range config.Chans {
+		prejoinedChans[c] = true
 	}
 	for _, r := range config.Repos {
 		if r.Name == "" {
