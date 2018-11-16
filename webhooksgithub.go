@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/github"
 )
@@ -51,10 +52,14 @@ func onGithubPush(pe *github.PushEvent) error {
 		if len(short) > 6 {
 			short = short[:6]
 		}
+		commitMessage := c.GetMessage()
+		if idx := strings.Index(commitMessage, "\n"); idx > -1 {
+			commitMessage = commitMessage[:idx]
+		}
 		message := fmt.Sprintf("%s%s — %s — %s",
 			commitPrefix,
 			short,
-			c.GetMessage(),
+			commitMessage,
 			c.GetAuthor().GetName())
 		sendNotices(config.Feeds, fullname, message)
 	}
