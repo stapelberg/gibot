@@ -44,6 +44,7 @@ func onGithubPush(pe *github.PushEvent) error {
 	if _, ok := repos[repoURL]; !ok {
 		return fmt.Errorf("unknown repo: %s", repoURL)
 	}
+	var messages []string
 	for _, c := range pe.Commits {
 		if mergeMessage.MatchString(c.GetMessage()) {
 			continue
@@ -61,7 +62,8 @@ func onGithubPush(pe *github.PushEvent) error {
 			short,
 			commitMessage,
 			c.GetAuthor().GetName())
-		sendNotices(config.Feeds, fullname, message)
+		messages = append(messages, message)
 	}
+	sendNotices(config.Feeds, fullname, messages...)
 	return nil
 }
