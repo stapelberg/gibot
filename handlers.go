@@ -85,8 +85,7 @@ func sendNotice(channel, categ, body string) {
 	})
 }
 
-func sendNotices(chans []string, categ, body string) {
-	message := fmt.Sprintf("[%s] %s", categ, body)
+func sendNotices(chans []string, categ string, body ...string) {
 	for _, channel := range chans {
 		if !prejoinedChans[channel] {
 			throttle.Send(&irc.Message{
@@ -94,13 +93,20 @@ func sendNotices(chans []string, categ, body string) {
 				Params:  []string{channel},
 			})
 		}
+	}
 
-		throttle.Send(&irc.Message{
-			Command:  irc.NOTICE,
-			Params:   []string{channel},
-			Trailing: message,
-		})
+	for _, channel := range chans {
+		for _, body := range body {
+			message := fmt.Sprintf("[%s] %s", categ, body)
+			throttle.Send(&irc.Message{
+				Command:  irc.NOTICE,
+				Params:   []string{channel},
+				Trailing: message,
+			})
+		}
+	}
 
+	for _, channel := range chans {
 		if !prejoinedChans[channel] {
 			throttle.Send(&irc.Message{
 				Command: irc.PART,
