@@ -2,7 +2,7 @@
 
 [![Travis](https://travis-ci.org/mvdan/gibot.svg?branch=master)](https://travis-ci.org/mvdan/gibot)
 
-Simple IRC bot that helps software projects.
+Simple IRC bot that helps software projects. Requires Go 1.11 or later.
 
 ### Setup
 
