@@ -90,7 +90,7 @@ func (r *Repo) IssueInfo(id int) (string, error) {
 }
 
 func (r *Repo) GetMergeRequest(id int) (*client.MergeRequest, error) {
-	merge, _, err := r.Client.MergeRequests.GetMergeRequest(r.Path, id)
+	merge, _, err := r.Client.MergeRequests.GetMergeRequest(r.Path, id, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -1,20 +1,16 @@
 module mvdan.cc/gibot
 
 require (
-	github.com/go-kit/kit v0.7.0 // indirect
-	github.com/go-logfmt/logfmt v0.3.0 // indirect
+	github.com/go-kit/kit v0.8.0 // indirect
+	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/google/go-github v17.0.0+incompatible
-	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
-	github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515 // indirect
-	github.com/nickvanw/ircx v0.0.0-20180308140407-c3e9589d07fa
+	github.com/nickvanw/ircx v0.0.0-20181210092626-1a8800ff55e7
 	github.com/sorcix/irc v1.1.4
-	github.com/xanzy/go-gitlab v0.11.0
-	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d // indirect
-	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be // indirect
-	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
-	google.golang.org/appengine v1.1.0 // indirect
-	gopkg.in/sorcix/irc.v1 v1.1.3 // indirect
+	github.com/xanzy/go-gitlab v0.12.2
+	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
+	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890 // indirect
+	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
+	google.golang.org/appengine v1.4.0 // indirect
 	mvdan.cc/xurls/v2 v2.0.0
 )
