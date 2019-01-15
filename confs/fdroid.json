@@ -14,7 +14,7 @@
 			"name": "client",
 			"prefix": "https://gitlab.com",
 			"path": "fdroid/fdroidclient",
-			"aliases": ["", "c", "fdroidclient"],
+			"aliases": ["c", "fdroidclient"],
 			"token": "privatetoken"
 		},
 		{
