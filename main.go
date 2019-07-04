@@ -17,8 +17,8 @@ import (
 	"mvdan.cc/gibot/site"
 	"mvdan.cc/gibot/site/gitlab"
 
-	"github.com/nickvanw/ircx"
-	"github.com/sorcix/irc"
+	"github.com/nickvanw/ircx/v2"
+	"gopkg.in/sorcix/irc.v2"
 	"mvdan.cc/xurls/v2"
 )
 

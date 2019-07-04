@@ -2,7 +2,7 @@
 
 [![Travis](https://travis-ci.org/mvdan/gibot.svg?branch=master)](https://travis-ci.org/mvdan/gibot)
 
-Simple IRC bot that helps software projects. Requires Go 1.11 or later.
+Simple IRC bot that helps software projects. Requires Go 1.12 or later.
 
 ### Setup
 
@@ -39,3 +39,21 @@ result in the following behaviour:
 * `abcdef12`, `abcdef12345678` and any valid commit hash at least 8
   characters in length will make the bot link the commit (it will try
   all the repos and return the first result)
+
+### Systemd
+
+Below is a sample systemd service file to run it as a daemon. The automatic
+restarts will take care of failures to reconnect and crashes, if there are any.
+
+```
+[Unit]
+Description=Gibot
+
+[Service]
+ExecStart=/opt/gibot/gibot -c /opt/gibot/config.json
+Restart=on-failure
+RestartSec=20s
+
+[Install]
+WantedBy=default.target
+```
