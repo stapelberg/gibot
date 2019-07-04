@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nickvanw/ircx"
-	"github.com/sorcix/irc"
+	"github.com/nickvanw/ircx/v2"
+	"gopkg.in/sorcix/irc.v2"
 )
 
 func onWelcome(s ircx.Sender, m *irc.Message) {
@@ -28,7 +28,6 @@ func onPing(s ircx.Sender, m *irc.Message) {
 	err := s.Send(&irc.Message{
 		Command:  irc.PONG,
 		Params:   m.Params,
-		Trailing: m.Trailing,
 	})
 	if err != nil {
 		log.Printf("Could not reply to PING: %v", err)
@@ -37,7 +36,7 @@ func onPing(s ircx.Sender, m *irc.Message) {
 
 func onPrivmsg(s ircx.Sender, m *irc.Message) {
 	channel := m.Params[0]
-	line := m.Trailing
+	line := m.Trailing()
 	for _, m := range allRe.FindAllString(line, -1) {
 		for _, r := range repos {
 			if ss := r.IssueRe.FindStringSubmatch(m); ss != nil && ss[0] == m {
@@ -80,8 +79,7 @@ func sendNotice(channel, categ, body string) {
 	message := fmt.Sprintf("[%s] %s", categ, body)
 	throttle.Send(&irc.Message{
 		Command:  irc.NOTICE,
-		Params:   []string{channel},
-		Trailing: message,
+		Params:   []string{channel, message},
 	})
 }
 
@@ -100,8 +98,7 @@ func sendNotices(chans []string, categ string, body ...string) {
 			message := fmt.Sprintf("[%s] %s", categ, body)
 			throttle.Send(&irc.Message{
 				Command:  irc.NOTICE,
-				Params:   []string{channel},
-				Trailing: message,
+				Params:   []string{channel, message},
 			})
 		}
 	}

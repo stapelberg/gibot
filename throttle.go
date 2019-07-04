@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/nickvanw/ircx"
-	"github.com/sorcix/irc"
+	"github.com/nickvanw/ircx/v2"
+	"gopkg.in/sorcix/irc.v2"
 )
 
 const timeBetweenMessages = 2 * time.Second
