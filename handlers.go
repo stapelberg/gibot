@@ -26,8 +26,8 @@ func onWelcome(s ircx.Sender, m *irc.Message) {
 
 func onPing(s ircx.Sender, m *irc.Message) {
 	err := s.Send(&irc.Message{
-		Command:  irc.PONG,
-		Params:   m.Params,
+		Command: irc.PONG,
+		Params:  m.Params,
 	})
 	if err != nil {
 		log.Printf("Could not reply to PING: %v", err)
@@ -78,8 +78,8 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 func sendNotice(channel, categ, body string) {
 	message := fmt.Sprintf("[%s] %s", categ, body)
 	throttle.Send(&irc.Message{
-		Command:  irc.NOTICE,
-		Params:   []string{channel, message},
+		Command: irc.NOTICE,
+		Params:  []string{channel, message},
 	})
 }
 
@@ -97,8 +97,8 @@ func sendNotices(chans []string, categ string, body ...string) {
 		for _, body := range body {
 			message := fmt.Sprintf("[%s] %s", categ, body)
 			throttle.Send(&irc.Message{
-				Command:  irc.NOTICE,
-				Params:   []string{channel, message},
+				Command: irc.NOTICE,
+				Params:  []string{channel, message},
 			})
 		}
 	}
