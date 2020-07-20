@@ -16,6 +16,7 @@ import (
 const (
 	titleLength = 50
 	shaLength   = 8
+	apiString   = "api/v4"
 )
 
 type Repo struct {
@@ -28,13 +29,18 @@ type Repo struct {
 	Client   client.Client
 }
 
-func NewRepo(r *site.Repo) *Repo {
+func NewRepo(r *site.Repo) (*Repo, error) {
 	issueRe := regexp.MustCompile(`(` + strings.Join(r.Aliases, "|") + `)#([1-9][0-9]*)`)
 	issueRe.Longest()
 	pullRe := regexp.MustCompile(`(` + strings.Join(r.Aliases, "|") + `)!([1-9][0-9]*)`)
 	pullRe.Longest()
 	commitRe := regexp.MustCompile(`\b[0-9a-f]{8,40}\b`)
 	commitRe.Longest()
+
+	c, err := client.NewClient(r.Token, client.WithBaseURL(r.Prefix+"/"+apiString))
+	if err != nil {
+		return nil, err
+	}
 	return &Repo{
 		Name:     r.Name,
 		Prefix:   r.Prefix,
@@ -42,8 +48,8 @@ func NewRepo(r *site.Repo) *Repo {
 		IssueRe:  issueRe,
 		PullRe:   pullRe,
 		CommitRe: commitRe,
-		Client:   *client.NewClient(nil, r.Token),
-	}
+		Client:   *c,
+	}, nil
 }
 
 func firstLine(s string) string {
