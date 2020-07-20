@@ -87,7 +87,11 @@ func main() {
 		if _, e := repos[url]; e {
 			log.Fatalf("Duplicate repo url found: %s", url)
 		}
-		repos[url] = gitlab.NewRepo(r)
+		repo, err := gitlab.NewRepo(r)
+		if err != nil {
+			log.Fatalf("Unable to create gitlab client: %v", err)
+		}
+		repos[url] = repo
 	}
 	allRe = joinRegexes(repos)
 
