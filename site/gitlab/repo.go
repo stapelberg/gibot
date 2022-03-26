@@ -70,7 +70,7 @@ func ShortTitle(message string) string {
 }
 
 func (r *Repo) GetUser(id int) (*client.User, error) {
-	user, _, err := r.Client.Users.GetUser(id)
+	user, _, err := r.Client.Users.GetUser(id, client.GetUsersOptions{})
 	return user, err
 }
 
