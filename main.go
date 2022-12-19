@@ -14,8 +14,8 @@ import (
 	"regexp"
 	"strings"
 
-	"mvdan.cc/gibot/site"
-	"mvdan.cc/gibot/site/gitlab"
+	"github.com/stapelberg/gibot/site"
+	"github.com/stapelberg/gibot/site/gitlab"
 
 	"github.com/nickvanw/ircx/v2"
 	"gopkg.in/sorcix/irc.v2"
@@ -64,11 +64,11 @@ func main() {
 		// process anymore. This way, two use-cases are covered:
 		//
 		// 1. Users who need a single instance of gibot can create
-		//    /perm/gibot.json and add mvdan.cc/gibot to their
+		//    /perm/gibot.json and add github.com/stapelberg/gibot to their
 		//    gokr-packer command line.
 		//
 		// 2. Users who need multiple instances of gibot can create their own
-		//    wrappers which run /user/gibot and add mvdan.cc/gibot to
+		//    wrappers which run /user/gibot and add github.com/stapelberg/gibot to
 		//    their gokr-packer command line. The auto-generated wrapper will
 		//    start gibot only once (as opposed to crashlooping forever).
 		os.Exit(125)

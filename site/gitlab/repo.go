@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"mvdan.cc/gibot/site"
+	"github.com/stapelberg/gibot/site"
 
 	client "github.com/xanzy/go-gitlab"
 )

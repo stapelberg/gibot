@@ -4,7 +4,7 @@ Simple IRC bot that helps software projects. Requires Go 1.13 or later.
 
 ### Setup
 
-	go get -u mvdan.cc/gibot
+	go get -u github.com/stapelberg/gibot
 
 It will read a config file from `config.json` by default. See the
 [example config](confs/fdroid.json) that the F-Droid project uses, for

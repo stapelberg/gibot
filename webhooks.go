@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"mvdan.cc/gibot/site/gitlab"
+	"github.com/stapelberg/gibot/site/gitlab"
 
 	api "github.com/xanzy/go-gitlab"
 )
